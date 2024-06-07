@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Studioheld</title>
+    <link rel="stylesheet" href="studioheld.css">
+    <script src="./studioheld.js"></script>
+
+    <!---------------------------------------------------------------->
+    <style type="text/css">
+      div.trainermacher {position: absolute;
+			 top: 0px; left: 0px;height: 1080px; width:  1920px;
+			 background-color: lightyellow;}
+      div.input {position: fixed; bottom: 20px;}
+    </style>
+    <!---------------------------------------------------------------->
+  </head>
+  <body>
+    <div class="trainermacher">
+      <div id="output">
+      </div>
+      <!---------------------------------------------------------------->
+      <div class="input">
+	<form>
+	  <label>name:</label>
+	  <input type="text" id="name1" value="Sie">
+	  <label>message:</label>
+	  <input type="text" id="message1" size="80" autofocus value="">
+	  <input type="button" value="Click Me!" onclick="sendMessage1()">
+	</form>
+	<form>
+	  <label>name:</label> <input type="text" id="name2" value="Gast">
+	  <label>message:</label> <input type="text" id="message2" size="80">
+	  <input type="button" onclick="sendMessage2()" value="Click Me!">
+	</form>
+      </div>
+    </div>
+    <script>
+      let data = {};
+      data.tid = 1;
+      data.chatname    = "Sie";
+      data.chatmessage = "";
+      //
+      function sendMessage1 () {
+	  if (name1.value) {
+              data.chatname = name1.value;
+	  }
+	  else {
+	      data.chatname   = "Sie";
+	  }
+	  data.chatmessage = message1.value;
+	  applyCustomActions(data);
+      }
+      function sendMessage2 () {
+	  if (name2.value) {
+              data.chatname = name2.value;
+	  }
+	  else {
+	      data.chatname = "sonst wer";
+	  }
+	  data.chatmessage = message2.value;
+	  applyCustomActions(data);
+      }
+    </script>
+    <!---------------------------------------------------------------->
+  </body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Chat Room</title>
+	</head>
+	<body>
+		<input
+			id="meeting-link"
+			type="text"
+			placeholder="Enter meeting link"
+			size="50"
+		/><br />
+		<input
+			id="user-id"
+			type="text"
+			placeholder="Enter user ID"
+			size="50"
+		/><br />
+		<button id="connect-button">Connect to WebSocket</button><br />
+		<textarea
+			id="message-input"
+			cols="50"
+			rows="5"
+			placeholder="Type your message here"
+		></textarea
+		><br />
+		<button id="send-button">Send Message</button>
+
+		{{ room_name|json_script:"user-id" }}
+		<script>
+			var ws;
+
+			document.querySelector("#connect-button").onclick = function (e) {
+				var meetingLink = document.querySelector("#meeting-link").value;
+				var userId = document.querySelector("#user-id").value;
+
+				// Initialize a new WebSocket connection
+				ws = new WebSocket(meetingLink);
+
+				ws.onopen = function () {
+					// Disable the connect button when the WebSocket is connected
+					document.querySelector("#connect-button").disabled = true;
+				};
+			};
+
+			document.querySelector("#send-button").onclick = function (e) {
+				var message = document.querySelector("#message-input").value;
+
+				// Send the message through the WebSocket
+				ws.send(
+					JSON.stringify({
+						userId: userId,
+						message: message,
+					})
+				);
+
+				// Clear the message input field
+				document.querySelector("#message-input").value = "";
+			};
+		</script>
+	</body>
+</html>
