@@ -2,6 +2,7 @@
 from logging import Logger
 from multiprocessing import Queue
 from time import sleep
+from typing import final
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from .aux import send_status  
@@ -57,5 +58,20 @@ def spotlight(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names
     finally:
         switch_to_chat(driver)
 
-def unspot(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names:list[str]):
-    pass
+def unspotall(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names:list[str]):
+    switch_to_participant(driver)
+    try:
+        WebDriverWait(driver,5).until(
+            EC.presence_of_element_located((By.XPATH,"//div[@data-tid='calling-right-side-panel']//button[@data-tid='more-menu-trigger']"))
+        ).click()
+        WebDriverWait(driver,5).until(
+            EC.presence_of_element_located((By.XPATH,"//span[text()='Stop all spotlights']"))
+        ).click()
+        WebDriverWait(driver,5).until(
+            EC.presence_of_element_located((By.XPATH,"//button[@data-tid='confirm-spotlight-change-button']"))
+        ).click()
+    except Exception as e:
+        print(e)
+    finally:
+        switch_to_chat(driver)
+        

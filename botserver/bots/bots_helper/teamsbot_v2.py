@@ -6,15 +6,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 
-from .teamsbox_v2_aux import spotlight
+from .teamsbox_v2_aux import spotlight, unspotall
 from .aux import Message,send_message,send_status
 from channels.layers import get_channel_layer
 from datetime import datetime
 import logging as lg
 from multiprocessing import Queue
 lg.basicConfig(level=lg.DEBUG, filename="py_log.log",filemode="w")
-from dotenv import load_dotenv
-# load_dotenv()
 
 NAME="Studioheld.in"
 WAIT_ADMIT_TIME = 120
@@ -38,7 +36,6 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
     chrome_options.add_argument("--use-fake-ui-for-media-stream")
     # chrome_options.add_argument("--user-data-dir=chrome-data")
     if "DEV" not in os.environ.keys() or os.environ['DEV'] == False:
-        chrome_options.add_argument("--user-data-dir=chrome-data")
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
@@ -153,6 +150,8 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
                         print("spotlight")
                         spotlights = [*args,*spotlights]
                         spotlight(driver,lg,q,userid,channel_layer,*args)
+                    case "unspot":
+                        unspotall(driver,lg,q,userid,channel_layer,args)
 
             now = datetime.now()
             time_difference = now - startTime

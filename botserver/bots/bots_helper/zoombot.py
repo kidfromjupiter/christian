@@ -13,8 +13,6 @@ from datetime import datetime
 from multiprocessing import Queue
 import logging as lg
 lg.basicConfig(level=lg.DEBUG, filename="py_log.log",filemode="w")
-from dotenv import load_dotenv
-load_dotenv()
 WAIT_ADMIT_TIME = 120
 NAME = "Studioheld.in"
 MESSAGE_POLL_RATE = 0.1

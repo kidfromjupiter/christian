@@ -5,6 +5,9 @@ from bots.bots_helper.teamsbot import run_teamsbot
 from bots.bots_helper.zoombot import run_zoombot
 from bots.bots_helper.teamsbot_v2 import run_teamsbot as run_teamsbot_v2
 import psutil
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path=".env")
 
 def killtree(pid, including_parent=True):
     parent = psutil.Process(pid)
