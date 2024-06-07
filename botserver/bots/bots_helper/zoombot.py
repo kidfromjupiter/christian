@@ -137,6 +137,8 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
         )
         sent_id_list:list[str] = []
         spotlights:list[str] = []
+        author = ""
+        avatar = ""
         while True:
             if not q.empty():
                 command = q.get()
@@ -172,31 +174,31 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
             chat_container = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "chat-container__chat-list")]'))
             )
-            message = chat_container.find_elements(By.XPATH,".//div[@class='chat-item-container']")[-1]
-            driver.execute_script("arguments[0].scrollIntoView();",message)
-            author = ""
-            avatar = ""
-            try:
-                message.find_element(By.XPATH, ".//div[contains(@class, 'info-header')]")
+            messages = chat_container.find_elements(By.XPATH,".//div[@class='chat-item-container']")
+            if len(messages) > 0:
+                message = messages[-1]
+                driver.execute_script("arguments[0].scrollIntoView();",message)
                 try:
-                    #avatar image isnt always available. 
-                    avatar = message.find_element(By.XPATH, ".//img[@class='chat-item__user-avatar']").get_attribute("src")
+                    message.find_element(By.XPATH, ".//div[contains(@class, 'info-header')]")
+                    try:
+                        #avatar image isnt always available. 
+                        avatar = message.find_element(By.XPATH, ".//img[@class='chat-item__user-avatar']").get_attribute("src")
+                    except:
+                        pass
+                    finally:
+                        author = message.find_element(By.XPATH,".//span[contains(@class,'chat-item__sender')]").text
                 except:
                     pass
                 finally:
-                    author = message.find_element(By.XPATH,".//span[contains(@class,'chat-item__sender')]").text
-            except:
-                pass
-            finally:
-                msg_content = message.find_element(By.XPATH,".//div[@class='new-chat-message__content']").text
-                content_id = message.find_element(By.XPATH,".//div[@class='new-chat-message__content']/div/div").get_attribute("id")
-                new_msg = Message("zoom",author,msg_content,avatar,content_id)
-                if new_msg.contentId not in sent_id_list:
-                    sent_id_list.append(new_msg.contentId)
-                    #send to server
-                    send_message(userid,new_msg.stringify(),channel_layer)
-                    print(f"New message from {new_msg.chatname} in Zoom chat: {new_msg.chatmessage}")
-            sleep(MESSAGE_POLL_RATE)
+                    msg_content = message.find_element(By.XPATH,".//div[@class='new-chat-message__content']").text
+                    content_id = message.find_element(By.XPATH,".//div[@class='new-chat-message__content']/div/div").get_attribute("id")
+                    new_msg = Message("zoom",author,msg_content,avatar,content_id)
+                    if new_msg.contentId not in sent_id_list:
+                        sent_id_list.append(new_msg.contentId)
+                        #send to server
+                        send_message(userid,new_msg.stringify(),channel_layer)
+                        print(f"New message from {new_msg.chatname} in Zoom chat: {new_msg.chatmessage}")
+                sleep(MESSAGE_POLL_RATE)
     except Exception as e:
         print(e)
         send_status(userid,"Bot ended",channel_layer)

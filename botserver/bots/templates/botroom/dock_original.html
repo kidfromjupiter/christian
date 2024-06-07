@@ -1743,6 +1743,7 @@
 		  	/>
 		  	<input type="number" name="timeout" id="timeout" size=4 />
 		  	<button id="start-bot-button">Start Bot</button>
+		  	<button id="kill-bot-button">Kill bot</button>
 		  </div>
 
 			<button
@@ -2863,6 +2864,11 @@
 			var conCon = 1;
 			var socketserver = false;
 
+			var botHolder = document.querySelector("#bot-holder");
+			var start_bot_button = document.querySelector("#start-bot-button");
+			var botStatus = document.querySelector("#bot-status");
+
+			botHolder.style.display = "none";
 			var serverURL =
 				"ws://" + window.location.host + "/ws/bots/" + roomID + "/";
 			// var serverURL = "wss://api.overlay.ninja/api";
@@ -2888,10 +2894,11 @@
 					}, 100 * conCon);
 				};
 
-				// socketserver.onopen = function (){
-				// 	conCon = 1;
-				// 	socketserver.send(JSON.stringify({"join":roomID.split(",")[0], "out":2, "in":1}));
-				// };
+				socketserver.onopen = function (){
+					conCon = 1;
+          botHolder.style.display = "block";
+    
+				};
 
 				socketserver.onerror = function (error) {
 					console.error("WebSocket error:", error);
@@ -2906,6 +2913,10 @@
 						} catch (e) {
 							return;
 						}
+            if (data.type == "bot.status"){
+              botStatus.innerHTML = data.status
+              return
+            }
 						if (data.message) {
 							var msg = data.message;
 							data.content = JSON.parse(msg);
@@ -4177,10 +4188,6 @@
 						"Featured — 🌟 Auto-feature messages as they come in";
 				}
 			}
-			var botHolder = document.querySelector("#bot-holder");
-			var start_bot_button = document.querySelector("#start-bot-button");
-
-			botHolder.style.display = "none";
 			start_bot_button.onclick = function (e) {
 				var meetingLink = document.querySelector("#meeting-link").value;
 				console.log("pressed");
