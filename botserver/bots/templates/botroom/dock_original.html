@@ -7879,9 +7879,41 @@
 				}
 
 				function sendMessage(event) {
+          <!--TODO: overload this-->
 					event.preventDefault();
+
 					if (input.value) {
-						respondP2P(input.value);
+				    var meetingLink = document.querySelector("#meeting-link").value;
+				    var type = "";
+
+				    if (meetingLink.includes("zoom.us")) {
+				    	type = "zoom";
+				    } else if (meetingLink.includes("teams.live.com")) {
+				    	type = "teams";
+				    }
+
+				    var msg = {
+				    	chatname: roomID,
+				    	chatbadges: "",
+				    	backgroundColor: "",
+				    	textColor: "",
+				    	chatmessage: input.value,
+				    	chatimg: "https://picsum.photos/200",
+				    	hasDonation: "",
+				    	membership: "",
+				    	contentimg: "",
+				    	type: type,
+				    };
+				    // Send the message through the WebSocket
+				    socketserver.send(
+				    	JSON.stringify({
+				    		type: "chat.message",
+				    		message: JSON.stringify(msg),
+				    	})
+				    );
+
+
+						<!--respondP2P(input.value);-->
 					}
 					input.value = "";
 				}

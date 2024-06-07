@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from .zoombot_aux import removeallspotlights, spotlight
+from .zoombot_aux import mute, muteall, removeallspotlights, request_all_to_unmute, request_cameras, spotlight
 from .aux import Message, send_message,send_status
 from channels.layers import get_channel_layer
 from datetime import datetime
@@ -144,25 +144,25 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
                 command = q.get()
                 # ! is removed in consumers.py
                 command, *args = command.split("#")
+                print(args)
                 match command:
                     case "spotlight":
 
                         print("spotlight")
                         spotlights = [*args,*spotlights]
                         spotlight(driver,lg,q,userid,channel_layer,*args)
-                        pass
                     case "unspot":
                         removeallspotlights(driver,lg,q,userid,channel_layer,spotlights)
                     case "mutebuthost":
                         pass
-                    case "unmute":
-                        pass
+                    case "unmuteall":
+                        request_all_to_unmute(driver,lg,q,userid,channel_layer)
                     case "mute":
-                        pass
-                    case "muteme":
-                        pass
-                    case "mute":
-                        pass
+                        mute(driver,lg,q,userid,channel_layer,*args)
+                    case "muteall":
+                        muteall(driver,lg,q,userid,channel_layer)
+                    case "cameras":
+                        request_cameras(driver,args,lg,q,userid,channel_layer)
             check_ended(driver)
             now = datetime.now()
             time_difference = now - startTime
