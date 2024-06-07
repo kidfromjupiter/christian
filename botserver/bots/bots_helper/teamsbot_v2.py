@@ -1,24 +1,30 @@
+import os
 from time import sleep
+# from .teamsbot_v2_aux import spotlight
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
+
+from .teamsbox_v2_aux import spotlight
 from .aux import Message,send_message,send_status
 from channels.layers import get_channel_layer
 from datetime import datetime
 import logging as lg
 from multiprocessing import Queue
 lg.basicConfig(level=lg.DEBUG, filename="py_log.log",filemode="w")
+from dotenv import load_dotenv
+load_dotenv()
 
 NAME="Studioheld.in"
 WAIT_ADMIT_TIME = 120
-MESSAGE_POLL_RATE = 0.5
+MESSAGE_POLL_RATE = 0.1
 
 def create_msg(current_msg) -> Message:
     message_content = current_msg.find_element(By.XPATH, './/div[@data-tid="chat-pane-message"]')
     message_text = message_content.text
     message_id = message_content.get_attribute("id")
-    message_author = current_msg.find_element(By.XPATH, './/div[@data-tid="message-author-name"]').text
+    message_author = current_msg.find_element(By.XPATH, './/span[@data-tid="message-author-name"]').text
     try:
         message_avatar = current_msg.find_element(By.XPATH,'.//span[@data-tid="message-avatar"]/img').get_attribute("src")
     except:
@@ -31,9 +37,12 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--use-fake-ui-for-media-stream")
     # chrome_options.add_argument("--user-data-dir=chrome-data")
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
+    if "DEV" not in os.environ.keys() or os.environ['DEV'] == False:
+        chrome_options.add_argument("--user-data-dir=chrome-data")
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--no-sandbox")
+
     chrome_options.add_argument("--window-size=1920,1080")
     driver = webdriver.Chrome(chrome_options)
     lg.info("got chrome driver")
@@ -54,15 +63,16 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
             # Switch to the iframe
             driver.switch_to.frame(experience_container_iframe)
             lg.info("switched to iframe")
-            # mic_mute = WebDriverWait(driver, 60).until(
-            #     EC.presence_of_element_located((By.XPATH, '//div[@title="Microphone"]/div'))
-            # )
-            # mic_mute.click()
-            # cam_off = WebDriverWait(driver, 10).until(
-            #     EC.presence_of_element_located((By.XPATH, '//div[@title="Camera"]/div'))
-            # )
-            # sleep(2)
-            # cam_off.click()
+        if "DEV" in os.environ.keys() and os.environ['DEV'] == True:
+            mic_mute = WebDriverWait(driver, 60).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@title="Microphone"]/div'))
+            )
+            mic_mute.click()
+            cam_off = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@title="Camera"]/div'))
+            )
+            sleep(2)
+            cam_off.click()
 
         input_element = WebDriverWait(driver, 60).until(
             EC.presence_of_element_located((By.XPATH, '//input[@type="text"][@placeholder="Type your name"]'))
@@ -130,16 +140,29 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
         )
         lg.info("got messages container")
 
-        
+        spotlights:list[str] = []
         sent_id_list:list[str] = []
         while True:
+            if not q.empty():
+                command = q.get()
+                # ! is removed in consumers.py
+                command, *args = command.split("#")
+                print(args)
+                match command:
+                    case "spotlight":
+                        print("spotlight")
+                        spotlights = [*args,*spotlights]
+                        spotlight(driver,lg,q,userid,channel_layer,*args)
+
             now = datetime.now()
             time_difference = now - startTime
             if time_difference.total_seconds() > timeout * 60 * 60:
                 lg.error("Timeout Reached")
                 raise Exception("Timeout Reached")
-            
-            
+
+            messages_container = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@id="chat-pane-list"]'))
+            )
             send_status(userid,"Listening for messages",channel_layer)
             messages = messages_container.find_elements(By.XPATH, './/div[@data-testid="message-wrapper"]')
             if len(messages) ==0:
