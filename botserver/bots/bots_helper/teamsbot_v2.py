@@ -14,7 +14,7 @@ import logging as lg
 from multiprocessing import Queue
 lg.basicConfig(level=lg.DEBUG, filename="py_log.log",filemode="w")
 from dotenv import load_dotenv
-load_dotenv()
+# load_dotenv()
 
 NAME="Studioheld.in"
 WAIT_ADMIT_TIME = 120
