@@ -33,10 +33,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if "message" in text_data_json.keys():
             message = json.loads(text_data_json["message"])
             command:str = ""
-            if message["chatmessage"][0] == "!" and self.q != None:
-                command = message["chatmessage"][1:]
-                # removes ! and puts in into the queue
-                self.q.put(command.rstrip())
+            if message["chatmessage"][0] == "!" :
+                if hasattr(self,"q") :
+                    command = message["chatmessage"][1:]
+                    # removes ! and puts in into the queue
+                    self.q.put(command.rstrip())
+                return
         # force kill the bot
         if text_data_json['type'] == 'bot.kill' and hasattr(self,"botprocess") :
             if self.botprocess != None and self.botprocess.is_alive():
