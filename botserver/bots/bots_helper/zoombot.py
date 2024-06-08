@@ -12,6 +12,9 @@ from channels.layers import get_channel_layer
 from datetime import datetime
 from multiprocessing import Queue
 import logging as lg
+from django.conf import settings
+
+
 lg.basicConfig(level=lg.DEBUG, filename="py_log.log",filemode="w")
 WAIT_ADMIT_TIME = 120
 NAME = "Studioheld.in"
@@ -30,8 +33,7 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
     channel_layer = get_channel_layer()
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--use-fake-ui-for-media-stream")
-    if "DEV" not in os.environ.keys() or os.environ['DEV'] == False:
-        chrome_options.add_argument("--user-data-dir=chrome-data")
+    if not settings.DEV:
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
@@ -46,7 +48,7 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
 
         driver.get(f"https://app.zoom.us/wc/{meeting_id}/join?pwd={password}")
 
-        if "DEV" not in os.environ.keys() or os.environ['DEV'] == False:
+        if not settings.DEV:
             accept_cookies = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, "//button[@id='onetrust-accept-btn-handler']"))
             )

@@ -1743,7 +1743,7 @@
 		  	/>
 		  	<input type="number" name="timeout" id="timeout" size=4 />
 		  	<button id="start-bot-button">Start Bot</button>
-		  	<button id="kill-bot-button">Kill bot</button>
+		  	<button id="kill-bot-button" onclick="killbot();">Kill bot</button>
 		  </div>
 
 			<button
@@ -2921,6 +2921,10 @@
 							var msg = data.message;
 							data.content = JSON.parse(msg);
 						}
+            //receives featured message. should not display in dock again. will be duplicate. therefore reject them
+            if (data.content.feature){
+                return   
+            }
 						processInput(data);
 						if (data.get) {
 							var ret = {};
@@ -4203,41 +4207,13 @@
 					);
 				}
 			};
-
-			function sendMessage  (e) {
-				var message = document.querySelector("#message-input").value;
-				var meetingLink = document.querySelector("#meeting-link").value;
-				var type = "";
-
-				if (meetingLink.includes("zoom.us")) {
-					type = "zoom";
-				} else if (meetingLink.includes("teams.live.com")) {
-					type = "teams";
-				}
-
-				var msg = {
-					chatname: roomID,
-					chatbadges: "",
-					backgroundColor: "",
-					textColor: "",
-					chatmessage: message,
-					chatimg: "https://picsum.photos/200",
-					hasDonation: "",
-					membership: "",
-					contentimg: "",
-					type: type,
-				};
-				// Send the message through the WebSocket
-				socketserver.send(
+      function killbot(){
+        socketserver.send(
 					JSON.stringify({
-						type: "chat.message",
-						message: JSON.stringify(msg),
+						type: "bot.kill",
 					})
-				);
-
-				// Clear the message input field
-				document.querySelector("#message-input").value = "";
-			};
+    )
+    }
 			function pause() {
 				pauseState = !pauseState;
 				var ele = document.getElementById("pause");
@@ -5038,7 +5014,10 @@
 					return true;
 				} else if (!pauseState) {
 					return processData({ contents: data });
-				} else {
+				} else if (autoshow)
+          return sendDataP2P(data)
+    else {
+
 					queue.push({ contents: data });
 					if (queue.length > 100) {
 						// keep the queue from exploding in size
@@ -7426,7 +7405,7 @@
 				try {
 					if (socketserver) {
 						// send a copy to the remote API
-						// socketserver.send(JSON.stringify(data));
+    socketserver.send(JSON.stringify({type:"chat.message",message:JSON.stringify({...data,feature:true})}));
 					}
 					iframes.forEach((iframe) => {
 						var msg = {};

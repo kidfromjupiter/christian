@@ -1339,6 +1339,10 @@
 						}
 
 						if ("content" in data) {
+               //if the message doesnt have feauture == true, reject the message. We only want featured messages here
+                if (!data.content.feature){
+                  return
+                }
 							if (data.content) {
 								processData({ contents: data.content });
 							} else {

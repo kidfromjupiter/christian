@@ -5,9 +5,6 @@ from bots.bots_helper.teamsbot import run_teamsbot
 from bots.bots_helper.zoombot import run_zoombot
 from bots.bots_helper.teamsbot_v2 import run_teamsbot as run_teamsbot_v2
 import psutil
-from dotenv import load_dotenv
-
-load_dotenv(dotenv_path=".env")
 
 def killtree(pid, including_parent=True):
     parent = psutil.Process(pid)
@@ -40,7 +37,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 command = message["chatmessage"][1:]
                 # removes ! and puts in into the queue
                 self.q.put(command.rstrip())
-
+        # force kill the bot
+        if text_data_json['type'] == 'bot.kill' and hasattr(self,"botprocess") :
+            if self.botprocess != None and self.botprocess.is_alive():
+                killtree(self.botprocess.pid)
+                await self.channel_layer.group_send(
+                    self.room_group_name, {"type":"bot.status","status":"Bot killed forcefully"}
+                )
+            return
         # Send message to room group
         if text_data_json["type"] == "bot.start":
             self.q = Queue()

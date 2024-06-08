@@ -1,6 +1,7 @@
 import os
 from time import sleep
 # from .teamsbot_v2_aux import spotlight
+from django.conf import settings
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -35,7 +36,7 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("--use-fake-ui-for-media-stream")
     # chrome_options.add_argument("--user-data-dir=chrome-data")
-    if "DEV" not in os.environ.keys() or os.environ['DEV'] == False:
+    if not settings.DEV:
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
@@ -60,7 +61,7 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
             # Switch to the iframe
             driver.switch_to.frame(experience_container_iframe)
             lg.info("switched to iframe")
-        if "DEV" in os.environ.keys() and os.environ['DEV'] == True:
+        if not settings.DEV:
             mic_mute = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.XPATH, '//div[@title="Microphone"]/div'))
             )
