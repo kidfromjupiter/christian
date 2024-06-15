@@ -101,6 +101,10 @@ def muteall(driver: WebDriver, lg, q: Queue, userid: str, channel_layer):
             EC.presence_of_element_located((By.XPATH,"//button[text()='Mute All']"))
         )
         mute_all_button.click()
+        mute_all_continue_button = WebDriverWait(driver,10).until(
+            EC.presence_of_element_located((By.XPATH,"//button[text()='Continue']"))
+        )
+        mute_all_continue_button.click()
     except Exception as e:
         lg.error(e)
         send_status(userid, "Couldn't mute all. Is bot host or co-host?", channel_layer)

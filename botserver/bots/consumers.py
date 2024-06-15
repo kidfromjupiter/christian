@@ -1,10 +1,15 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from multiprocessing import Process,Queue
+
+from django.utils import timezone
 from bots.bots_helper.teamsbot import run_teamsbot
 from bots.bots_helper.zoombot import run_zoombot
 from bots.bots_helper.teamsbot_v2 import run_teamsbot as run_teamsbot_v2
 import psutil
+from channels.db import database_sync_to_async
+
+from bots.models import UserId
 
 def killtree(pid, including_parent=True):
     parent = psutil.Process(pid)
@@ -18,10 +23,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user_id = self.scope["url_route"]["kwargs"]["user_id"]
         self.room_group_name = f"{self.user_id}"
-        # Join room group
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-        self.filtered = ""
-        await self.accept()
+        try:
+            user = await UserId.objects.aget(id=self.user_id)
+            if user.expiry_date > timezone.now():     
+                # Join room group
+                await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+                self.filtered = ""
+                await self.accept()
+        except UserId.DoesNotExist:
+            await self.close()
 
     async def disconnect(self, close_code):
         # Leave room group
