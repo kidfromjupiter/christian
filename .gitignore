@@ -12,6 +12,7 @@ botserver/url.txt
 botserver/exit.png
 botserver/error.png
 botserver/page.html
+chrome-data
 # Created by https://www.toptal.com/developers/gitignore/api/python,django
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,django
 

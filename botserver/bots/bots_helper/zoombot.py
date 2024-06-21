@@ -41,6 +41,7 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
     # chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--user-data-dir=chrome-data")
     # chrome_options.add_argument("--disable-gpu")
     # chrome_options.add_argument("--no-sandbox")
 
@@ -151,11 +152,6 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
         participant_button.click()
         sleep(5)
         participant_button.click()
-
-
-
-
-
         # Wait for the chat container with class "chat-container__chat-list" to appear
         chat_container = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//div[contains(@class, "chat-container__chat-list")]'))
