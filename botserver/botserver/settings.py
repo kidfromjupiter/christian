@@ -18,7 +18,8 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEV = os.environ["DEV"] if "DEV" in os.environ.keys() else False 
+DEV = eval(os.environ["DEV"] if "DEV" in os.environ.keys() else "False" )
+# DEV= True
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 

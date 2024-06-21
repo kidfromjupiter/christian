@@ -44,8 +44,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message = json.loads(text_data_json["message"])
             command:str = ""
             if message["chatmessage"][0] == "!" :
+                command = message["chatmessage"][1:]
+                cmd, *args = command.split("#")
+                if cmd == "filter":
+                    await self.channel_layer.group_send(
+                        self.room_group_name,{"type":"filtered.name","name":args[0]}
+                    )
+                    return
                 if hasattr(self,"q") :
-                    command = message["chatmessage"][1:]
                     # removes ! and puts in into the queue
                     self.q.put(command.rstrip())
                 return
