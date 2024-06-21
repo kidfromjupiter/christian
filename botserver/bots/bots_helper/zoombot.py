@@ -40,9 +40,9 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
+    # chrome_options.add_argument("--headless")
+    # chrome_options.add_argument("--disable-gpu")
+    # chrome_options.add_argument("--no-sandbox")
 
     chrome_options.add_argument("--window-size=1920,1080")
     driver = webdriver.Chrome(chrome_options)  
@@ -117,6 +117,21 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
 
         # Click the stop video button
         stop_video_button.click()
+
+        settings_button = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//button[@aria-label="Settings"]'))
+        )
+        settings_button.click()
+        sleep(2)
+        settings_button.click()
+
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//div[text()="Always show meeting controls"]'))
+        ).click()
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//button[contains(@class,"zm-btn settings-dialog__close")]'))
+        ).click()
+
 
 
         # Wait for the div with class "footer-chat-button" to appear

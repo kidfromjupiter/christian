@@ -1,3 +1,4 @@
+from argparse import Action
 from multiprocessing import Queue
 import re
 from time import sleep
@@ -7,106 +8,121 @@ from .aux import send_status
 from selenium.webdriver.common.by import By  
 from selenium.webdriver.support import expected_conditions as EC  
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException,StaleElementReferenceException
 
-
-def spotlight(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names:list[str]) -> None:
+WAIT_BETWEEN_ACTION = 0.5
+     
+def spotlight(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names) -> None:
     try:
         lg.info("spotlight")
-        
+
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"participants-section-container")]'))
         )
-        participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+        participant_search = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//input[contains(@class,"participants-search-box__input")]'))
+        )
 
-        for element in participant_list:
-            name = element.find_element(By.XPATH,".//span[@class='participants-item__display-name']").text
-            if name in names:
-                ActionChains(driver).move_to_element(element).perform()
-                sleep(5)
+        participant_search.send_keys(100*"\b")
+        for name in names:
+            participant_search.send_keys(name)
+            participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+            for element in participant_list:
+                ActionChains(driver).move_to_element(element).click().perform()
+                sleep(WAIT_BETWEEN_ACTION)
                 more_button = element.find_element(By.XPATH,".//span[text()='More']")
                 more_button.click()
 
                 try:
                 
-                    spotlight_button = WebDriverWait(driver, 10).until(
+                    spotlight_button = WebDriverWait(driver, 2).until(
                         EC.presence_of_element_located((By.XPATH, '//button[text()="Spotlight for Everyone" or text()="Add Spotlight"]'))
                     )
                     spotlight_button.click()
                     lg.info("clicked spotlight button")
                     send_status(userid, "Spotlighted", channel_layer)
                 except TimeoutException:
-                    lg.error("Spotlight button not found. Likely the user is not a host")
-                    break;
-        send_status(userid, "Couldn't spotlight. Is bot host or co-host? Does the user have video turned on?", channel_layer)
+                        lg.error("Spotlight button not found. Likely the user is not a host")
+            participant_search.send_keys(len(name)*"\b")
     except Exception as e:
+        send_status(userid, "Couldn't spotlight. Is bot host or co-host? Does the user have video turned on?", channel_layer)
+        driver.save_screenshot("spotlight_error.png")
         print(e)
 
 def removespotlights(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names:list[str]):
-    lg.info("removing spotlights")
-    # setting gallery view
-    view_button = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//span[text()="View"]'))
-    )
-    ActionChains(driver).move_to_element(driver.find_element(By.XPATH,"//div[@class='main-layout']")).perform()
-    sleep(1)
-    view_button.click()
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//a[text()="Gallery View"]'))
-    ).click()
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//div[@class="gallery-video-container__main-view"]'))
-    )
-    participant_frames = driver.find_elements(By.XPATH, '//div[contains(@class,"gallery-video-container__video-frame")]')
+    try:
+        lg.info("removing spotlights")
+        # setting gallery view
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//span[text()="View"]'))
+        ).click()
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//a[text()="Gallery View"]'))
+        ).click()
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//div[@class="gallery-video-container__main-view"]'))
+        )
+        spotlight_participant_frames = driver.find_elements(By.XPATH, "//i[contains(@class, 'spotlight-icon')]/ancestor::*[contains(@class, 'gallery-video-container__video-frame')]")
     
-    for frame in participant_frames:
-        try:
-            # if spotlight icon exists, the user is spotlighted
-            frame.find_element(By.XPATH,".//i[contains(@class,'spotlight-icon')]")
-            name = frame.find_element(By.XPATH,".//div[@class='video-avatar__avatar-footer']/span").text
-            if len(names) == 0:
-                frame.click()
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH,".//button[@aria-label='More managing options']"))
-                ).click()
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[text()="Remove Spotlight"]'))
-                ).click()
-            elif name in names:
-                frame.click()
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH,".//button[@aria-label='More managing options']"))
-                ).click()
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[text()="Remove Spotlight"]'))
-                ).click()
-                
+        for frame in spotlight_participant_frames:
+            try:
+                name = frame.find_element(By.XPATH,".//div[@class='video-avatar__avatar-footer']/span").text
+                if len(names) == 0:
+                    WebDriverWait(driver,5).until(
+                        EC.element_to_be_clickable(frame)
+                    )
+                    ActionChains(driver).move_to_element(frame).click().perform()
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH,".//button[@aria-label='More managing options']"))
+                    ).click()
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, '//*[text()="Remove Spotlight"]'))
+                    ).click()
+                elif name in names:
+                    frame.click()
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH,".//button[@aria-label='More managing options']"))
+                    ).click()
+                    WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, '//*[text()="Remove Spotlight"]'))
+                    ).click()
+                    
 
-        except:
-            lg.error("UnSpotlight button not found. Likely the bot is not a host/co-host")
+            except:
+                lg.error("UnSpotlight button not found. Likely the bot is not a host/co-host")
+                frame.screenshot(f'{name}_frame.png')
 
-def mute(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names:list[str]) -> None:
+    except Exception as e:
+        lg.error(e)
+        driver.save_screenshot("remove_spotlight_error.png")
+
+def mute(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names) -> None:
     lg.info("cameras")
     # Get the participant button
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"participants-section-container")]'))
     )
-    participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+    participant_search = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//input[contains(@class,"participants-search-box__input")]'))
+            )
+    
+    participant_search.send_keys(100*'\b')
 
     try:
-        for element in participant_list:
-
-            driver.execute_script("arguments[0].scrollIntoView();",element)
-            name = element.find_element(By.XPATH,".//span[@class='participants-item__display-name']").text
-            if name in names:
-                ActionChains(driver).move_to_element(element).perform()
-                sleep(5)
+        for name in names:
+            participant_search.send_keys(name)
+            participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+            for element in participant_list:
+                ActionChains(driver).move_to_element(element).click().perform()
+                sleep(WAIT_BETWEEN_ACTION)
                 mute_button = element.find_element(By.XPATH,".//button[text()='Mute']")
                 mute_button.click()
 
-        lg.info("clicked mute button")
+            lg.info("clicked mute button")
+            participant_search.send_keys(len(name)*'\b')
         send_status(userid, "Muted", channel_layer)
     except Exception as e:
+        driver.save_screenshot("mute_Error.png")
         print(e)
 def muteall(driver: WebDriver, lg, q: Queue, userid: str, channel_layer):
     lg.info("muteall")
@@ -126,6 +142,7 @@ def muteall(driver: WebDriver, lg, q: Queue, userid: str, channel_layer):
     except Exception as e:
         lg.error(e)
         send_status(userid, "Couldn't mute all. Is bot host or co-host?", channel_layer)
+        driver.save_screenshot("muteall_error.png")
 
 def request_all_to_unmute(driver: WebDriver, lg, q: Queue, userid: str, channel_layer):
     lg.info("request all to unmute")
@@ -142,6 +159,7 @@ def request_all_to_unmute(driver: WebDriver, lg, q: Queue, userid: str, channel_
     except Exception as e:
         lg.error(e)
         send_status(userid,"Couldn't request all to unmute. Is bot host or co-host?",channel_layer)
+        driver.save_screenshot("requestall_unmute_error.png")
 
 def request_cameras(driver: WebDriver,names:list[str], lg, q: Queue, userid: str, channel_layer):
     lg.info("cameras")
@@ -149,33 +167,52 @@ def request_cameras(driver: WebDriver,names:list[str], lg, q: Queue, userid: str
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"participants-section-container")]'))
     )
-    participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+    participant_search = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//input[contains(@class,"participants-search-box__input")]'))
+            )
+    participant_search.send_keys(100*"\b")
 
     try:
-        for element in participant_list:
-            name = element.find_element(By.XPATH,".//span[@class='participants-item__display-name']").text
-            driver.execute_script("arguments[0].scrollIntoView();",element)
-            if len(names) > 0:
-                if name in names:
-                    ActionChains(driver).move_to_element(element).perform()
-                    sleep(5)
+        if len(names) > 0:
+            for name in names:
+                participant_search.send_keys(name)
+                participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+                for element in participant_list:
+                    ActionChains(driver).move_to_element(element).click().perform()
+                    sleep(WAIT_BETWEEN_ACTION)
                     more_button = element.find_element(By.XPATH,".//span[text()='More']")
                     more_button.click()
                     WebDriverWait(driver, 10).until(
                         EC.presence_of_element_located((By.XPATH, '//button[text()="Ask For Start Video"]'))
                     ).click()
-            else:
-                ActionChains(driver).move_to_element(element).perform()
-                sleep(5)
-                more_button = element.find_element(By.XPATH,".//span[text()='More']")
-                more_button.click()
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, '//button[text()="Ask For Start Video"]'))
-                ).click()
+                participant_search.send_keys(len(name)*"\b")
+        else:
+            participant_container = driver.find_element(By.XPATH,"//div[contains(@class,'participants-list-container participants-ul')]")
+            offsetHeight = driver.execute_script("return arguments[0].offsetHeight;",participant_container)
+            scrollHeight = driver.execute_script("return arguments[0].scrollHeight;",participant_container)
+            driver.execute_script("arguments[0].scrollTop = 0;",participant_container)
+            scrollTop = 0
+            while scrollTop < scrollHeight:
+                driver.execute_script(f"arguments[0].scrollTop += {offsetHeight};",participant_container)    
+                participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+                for element in participant_list:
+                    ActionChains(driver).move_to_element(element).click().perform()
+                    sleep(WAIT_BETWEEN_ACTION)
+                    try:
+                        more_button = element.find_element(By.XPATH,".//span[text()='More']")
+                        more_button.click()
+                        WebDriverWait(driver, 10).until(
+                            EC.presence_of_element_located((By.XPATH, '//button[text()="Ask For Start Video"]'))
+                        ).click()
+                    except:
+                        pass
+                scrollTop = min(scrollTop + offsetHeight,scrollHeight)
+
 
         send_status(userid, "Asked for video", channel_layer)
     except Exception as e:
         print(e)
+        driver.save_screenshot("request_start_Video_error.png")
 
 def mutebuthost(driver: WebDriver,lg, q: Queue, userid: str, channel_layer):
     lg.info("cameras")
@@ -191,11 +228,11 @@ def mutebuthost(driver: WebDriver,lg, q: Queue, userid: str, channel_layer):
             for match in matches:
                 if "Host" in match:
                     return
-            driver.execute_script("arguments[0].scrollIntoView();",element)
+            driver.execute_script("arguments[0].scrollIntoView({behaviour:'instant',block:'end'});",element)
             name = element.find_element(By.XPATH,".//span[@class='participants-item__display-name']").text
             if name in names:
-                ActionChains(driver).move_to_element(element).perform()
-                sleep(5)
+                ActionChains(driver).move_to_element(element).click().perform()
+                sleep(WAIT_BETWEEN_ACTION)
                 mute_button = element.find_element(By.XPATH,".//button[text()='Mute']")
                 mute_button.click()
 
@@ -203,3 +240,4 @@ def mutebuthost(driver: WebDriver,lg, q: Queue, userid: str, channel_layer):
         send_status(userid, "Muted", channel_layer)
     except Exception as e:
         print(e)
+        driver.save_screenshot("mute_but_host_error.png")

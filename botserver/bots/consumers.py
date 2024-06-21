@@ -52,6 +52,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     )
                     return
                 if hasattr(self,"q") :
+                    if command == 'muteme':
+                        self.q.put(f'mute{self.filtered}')
+                        return
                     # removes ! and puts in into the queue
                     self.q.put(command.rstrip())
                 return
