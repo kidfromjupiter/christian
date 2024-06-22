@@ -37,6 +37,7 @@ if (elemRect.bottom < parentRect.top) {
     return 'within';
 }
 """
+    
 def spotlight(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names) -> None:
     try:
         lg.info("spotlight")
@@ -229,6 +230,7 @@ def request_cameras(driver: WebDriver,names:list[str], lg, q: Queue, userid: str
                 participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
                 for element in participant_list:
 
+                    send_status(userid,"Requesting Camera from participants",channel_layer)
                     #checking whether we already checked this participant
                     element_id = element.find_element(By.XPATH,".//div[contains(@class,'participants-li')]").get_attribute("id")
                     if element_id not in id_list:
@@ -272,21 +274,50 @@ def mutebuthost(driver: WebDriver,lg, q: Queue, userid: str, channel_layer):
     participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
 
     try:
-        for element in participant_list:
-            matches = re.findall(r'\([^()]*\)',element.text)
-            for match in matches:
-                if "Host" in match:
-                    return
-            driver.execute_script("arguments[0].scrollIntoView({behaviour:'instant',block:'end'});",element)
-            name = element.find_element(By.XPATH,".//span[@class='participants-item__display-name']").text
-            if name in names:
-                ActionChains(driver).move_to_element(element).click().perform()
-                sleep(WAIT_BETWEEN_ACTION)
-                mute_button = element.find_element(By.XPATH,".//button[text()='Mute']")
-                mute_button.click()
+        id_list = []
+        participant_container = driver.find_element(By.XPATH,"//div[contains(@class,'participants-list-container participants-ul')]")
+        offsetHeight = driver.execute_script("return arguments[0].offsetHeight;",participant_container)
+        scrollHeight = driver.execute_script("return arguments[0].scrollHeight;",participant_container)
+        driver.execute_script("arguments[0].scrollTop = 0;",participant_container)
 
-        lg.info("clicked mute button")
-        send_status(userid, "Muted", channel_layer)
+        scrollTop = 0
+        while scrollTop + offsetHeight < scrollHeight:
+            scrollTop = driver.execute_script("return arguments[0].scrollTop;",participant_container)
+            participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+            for element in participant_list:
+
+                send_status(userid,"Muting people",channel_layer)
+                #checking whether we already checked this participant
+                element_id = element.find_element(By.XPATH,".//div[contains(@class,'participants-li')]").get_attribute("id")
+                if element_id not in id_list:
+                    #getting the position of element relative to parent viewport. If above, do nothing, if below, scroll down. If within, do the thing
+                    relative_pos = driver.execute_script(is_above_or_below_script, element, participant_container) 
+                    if relative_pos == 'below':
+                        # break out of for loop, which will cause a scroll down
+                        break
+                    if relative_pos == "within":
+                        # do some stuff
+                        try:
+                            id_list.append(element_id)
+                            matches = re.findall(r'\([^()]*\)',element.text)
+                            participant_is_host = False
+                            for match in matches:
+                                if "Host" in match:
+                                    participant_is_host = True
+                                    # this is a host. go to the next participant
+                            if not participant_is_host:
+                                ActionChains(driver).move_to_element(element).click().perform()
+                                sleep(WAIT_BETWEEN_ACTION)
+                                mute_button = element.find_element(By.XPATH,".//button[text()='Mute']")
+                                WebDriverWait(driver,0.5).until(
+                                    EC.element_to_be_clickable(mute_button)
+                                )
+                                ActionChains(driver).move_to_element(mute_button).click_and_hold().pause(0.25).release().perform()
+                        except:
+                            pass
+
+            driver.execute_script(f"arguments[0].scrollTop += {offsetHeight}",participant_container)
+            sleep(0.5)
     except Exception as e:
-        print(e)
+        lg.error(e)
         driver.save_screenshot("mute_but_host_error.png")

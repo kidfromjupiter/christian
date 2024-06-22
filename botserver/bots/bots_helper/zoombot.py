@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from .zoombot_aux import mute, muteall, removespotlights, request_all_to_unmute, request_cameras, spotlight
+from .zoombot_aux import mute, muteall, mutebuthost, removespotlights, request_all_to_unmute, request_cameras, spotlight
 from .aux import Message, send_message,send_status
 from channels.layers import get_channel_layer
 from datetime import datetime
@@ -41,7 +41,7 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
     # chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--user-data-dir=chrome-data")
+    # chrome_options.add_argument("--user-data-dir=chrome-data")
     # chrome_options.add_argument("--disable-gpu")
     # chrome_options.add_argument("--no-sandbox")
 
@@ -175,7 +175,7 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
                     case "unspot":
                         removespotlights(driver,lg,q,userid,channel_layer,*args)
                     case "mutebuthost":
-                        pass
+                        mutebuthost(driver,lg,q,userid,channel_layer)
                     case "unmuteall":
                         request_all_to_unmute(driver,lg,q,userid,channel_layer)
                     case "mute":
