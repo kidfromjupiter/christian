@@ -41,7 +41,7 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
         chrome_options.add_argument("--disable-gpu")
         chrome_options.add_argument("--no-sandbox")
     # chrome_options.add_argument("--headless")
-    # chrome_options.add_argument("--user-data-dir=chrome-data")
+    chrome_options.add_argument("--user-data-dir=chrome-data")
     # chrome_options.add_argument("--disable-gpu")
     # chrome_options.add_argument("--no-sandbox")
 

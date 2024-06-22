@@ -23,6 +23,20 @@ is_in_viewport_script = """
         elemRect.right <= parentRect.right
     );
     """
+is_above_or_below_script = """
+var elem = arguments[0],                 // Element to check
+    parent = arguments[1],               // Parent element
+    elemRect = elem.getBoundingClientRect(),
+    parentRect = parent.getBoundingClientRect();
+
+if (elemRect.bottom < parentRect.top) {
+    return 'above';
+} else if (elemRect.bottom > parentRect.bottom) {
+    return 'below';
+} else {
+    return 'within';
+}
+"""
 def spotlight(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names) -> None:
     try:
         lg.info("spotlight")
@@ -203,33 +217,46 @@ def request_cameras(driver: WebDriver,names:list[str], lg, q: Queue, userid: str
                     ).click()
                 participant_search.send_keys(len(name)*"\b")
         else:
+            id_list = []
             participant_container = driver.find_element(By.XPATH,"//div[contains(@class,'participants-list-container participants-ul')]")
-            # offsetHeight = driver.execute_script("return arguments[0].offsetHeight;",participant_container)
-            # scrollHeight = driver.execute_script("return arguments[0].scrollHeight;",participant_container)
+            offsetHeight = driver.execute_script("return arguments[0].offsetHeight;",participant_container)
+            scrollHeight = driver.execute_script("return arguments[0].scrollHeight;",participant_container)
             driver.execute_script("arguments[0].scrollTop = 0;",participant_container)
-            # participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
-            participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
-            for element in participant_list:
-                is_in_viewport = driver.execute_script(is_in_viewport_script, element, participant_container) 
-                if not is_in_viewport:
-                    # need to scroll down
-                    driver.execute_script("arguments[0].scrollIntoView({block:'end',inline:'nearest',behaviour:'instant'})",element)    
-                    # breaking out of for loop to get the participant_list again
-                ActionChains(driver).move_to_element(element).click().perform()
-                sleep(WAIT_BETWEEN_ACTION)
 
-                try:
-                    more_button = element.find_element(By.XPATH,".//span[text()='More']")
-                    WebDriverWait(driver,2).until(
-                        EC.element_to_be_clickable(more_button)
-                    )
-                    more_button.click()
-                    WebDriverWait(driver, 2).until(
-                        EC.presence_of_element_located((By.XPATH, '//button[text()="Ask For Start Video"]'))
-                    ).click()
-                except:
-                    pass
+            scrollTop = 0
+            while scrollTop + offsetHeight < scrollHeight:
+                scrollTop = driver.execute_script("return arguments[0].scrollTop;",participant_container)
+                participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+                for element in participant_list:
 
+                    #checking whether we already checked this participant
+                    element_id = element.find_element(By.XPATH,".//div[contains(@class,'participants-li')]").get_attribute("id")
+                    if element_id not in id_list:
+                        #getting the position of element relative to parent viewport. If above, do nothing, if below, scroll down. If within, do the thing
+                        relative_pos = driver.execute_script(is_above_or_below_script, element, participant_container) 
+                        if relative_pos == 'below':
+                            # break out of for loop, which will cause a scroll down
+                            break
+                        if relative_pos == "within":
+                            # do some stuff
+                            ActionChains(driver).move_to_element(element).click().perform()
+                            id_list.append(element_id)
+                            sleep(WAIT_BETWEEN_ACTION)
+
+                            try:
+                                more_button = element.find_element(By.XPATH,".//span[text()='More']")
+                                WebDriverWait(driver,2).until(
+                                    EC.element_to_be_clickable(more_button)
+                                )
+                                more_button.click()
+                                WebDriverWait(driver, 2).until(
+                                    EC.presence_of_element_located((By.XPATH, '//button[text()="Ask For Start Video"]'))
+                                ).click()
+                            except:
+                                pass
+
+                driver.execute_script(f"arguments[0].scrollTop += {offsetHeight}",participant_container)
+                sleep(0.5)
 
         send_status(userid, "Asked for video", channel_layer)
     except Exception as e:
