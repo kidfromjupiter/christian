@@ -119,11 +119,14 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
         # Click the stop video button
         stop_video_button.click()
 
-        settings_button = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//button[@aria-label="Settings"]'))
-        )
-        settings_button.click()
+        # Click the more button twice. zoom issue
+        more_button.click()
         sleep(2)
+        more_button.click()
+
+        settings_button = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//a[@aria-label="Settings"]'))
+        )
         settings_button.click()
 
         WebDriverWait(driver, 10).until(
@@ -146,7 +149,7 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
         chat_button.click()
 
         participant_button = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//div[@feature-type="participants"]'))
+                EC.presence_of_element_located((By.XPATH, '//div[@feature-type="participant"]'))
             )
         lg.info("got participant button")
         participant_button.click()
