@@ -1,5 +1,3 @@
-from argparse import Action
-from multiprocessing import Queue
 import re
 from time import sleep
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -8,7 +6,7 @@ from .aux import send_status
 from selenium.webdriver.common.by import By  
 from selenium.webdriver.support import expected_conditions as EC  
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import TimeoutException,StaleElementReferenceException
+from selenium.common.exceptions import TimeoutException
 
 WAIT_BETWEEN_ACTION = 0.5
 is_in_viewport_script = """
@@ -38,7 +36,7 @@ if (elemRect.bottom < parentRect.top) {
 }
 """
     
-def spotlight(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names) -> None:
+def spotlight(driver: WebDriver, lg, userid: str, channel_layer,*names) -> None:
     try:
         lg.info("spotlight")
 
@@ -78,7 +76,7 @@ def spotlight(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names
         driver.save_screenshot("spotlight_error.png")
         print(e)
 
-def removespotlights(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names:list[str]):
+def removespotlights(driver: WebDriver, lg, userid: str, channel_layer,*names:list[str]):
     try:
         lg.info("removing spotlights")
         # setting gallery view
@@ -124,7 +122,7 @@ def removespotlights(driver: WebDriver, lg, q: Queue, userid: str, channel_layer
         lg.error(e)
         driver.save_screenshot("remove_spotlight_error.png")
 
-def mute(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names) -> None:
+def mute(driver: WebDriver, lg, userid: str, channel_layer,*names) -> None:
     lg.info("cameras")
     # Get the participant button
     WebDriverWait(driver, 10).until(
@@ -152,7 +150,7 @@ def mute(driver: WebDriver, lg, q: Queue, userid: str, channel_layer,*names) -> 
     except Exception as e:
         driver.save_screenshot("mute_Error.png")
         print(e)
-def muteall(driver: WebDriver, lg, q: Queue, userid: str, channel_layer):
+def muteall(driver: WebDriver, lg, userid: str, channel_layer):
     lg.info("muteall")
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"participants-section-container")]'))
@@ -172,7 +170,7 @@ def muteall(driver: WebDriver, lg, q: Queue, userid: str, channel_layer):
         send_status(userid, "Couldn't mute all. Is bot host or co-host?", channel_layer)
         driver.save_screenshot("muteall_error.png")
 
-def request_all_to_unmute(driver: WebDriver, lg, q: Queue, userid: str, channel_layer):
+def request_all_to_unmute(driver: WebDriver, lg, userid: str, channel_layer):
     lg.info("request all to unmute")
     participant_section = WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"participants-section-container")]'))
@@ -189,7 +187,7 @@ def request_all_to_unmute(driver: WebDriver, lg, q: Queue, userid: str, channel_
         send_status(userid,"Couldn't request all to unmute. Is bot host or co-host?",channel_layer)
         driver.save_screenshot("requestall_unmute_error.png")
 
-def request_cameras(driver: WebDriver,names:list[str], lg, q: Queue, userid: str, channel_layer):
+def request_cameras(driver: WebDriver,names:list[str], lg, userid: str, channel_layer):
     lg.info("cameras")
     # Get the participant button
     WebDriverWait(driver, 10).until(
@@ -265,7 +263,7 @@ def request_cameras(driver: WebDriver,names:list[str], lg, q: Queue, userid: str
         print(e)
         driver.save_screenshot("request_start_Video_error.png")
 
-def mutebuthost(driver: WebDriver,lg, q: Queue, userid: str, channel_layer):
+def mutebuthost(driver: WebDriver,lg, userid: str, channel_layer):
     lg.info("cameras")
     # Get the participant button
     WebDriverWait(driver, 10).until(

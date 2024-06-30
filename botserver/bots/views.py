@@ -2,10 +2,6 @@
 from django.shortcuts import render
 
 
-def start_bot(request):
-    return render(request, "botroom/index.html")
-
-
 def room(request, room_name):
     return render(request, "botroom/room.html", {"room_name": room_name})
 
