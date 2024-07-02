@@ -1016,10 +1016,12 @@
 						position: fixed;
 						bottom: 0;
 						width: 100%;
-						height: 42px;
+						height: 60px;
 						padding-top: 4px;
 						padding-bottom: 0px;
 						display: flex;
+            flex-direction: column;
+            align-items: center;
 						justify-content: center;
 						background-color: var(--menu-background-color);
 						box-shadow: var(--menu-border-color);
@@ -1731,132 +1733,135 @@
 	<body id="main" class="vanilla notcompactmode">
 		<div id="pinned" class="output"></div>
 		<div id="output" class="output"></div>
-		<div id="menu" class="electronDraggable">
+		<div id="menu" class="electronDraggable" >
+      <div id='top-row'>
+		    <div id="bot-status"></div>
+		    <div id="bot-holder">
+		    	<input
+		    		id="meeting-link"
+		    		type="text"
+		    		placeholder="Enter meeting link"
+		    		size="50"
+		    	/>
+		    	<input type="number" name="timeout" id="timeout" size=4 />
+		    	<button id="start-bot-button">Start Bot</button>
+		    	<button id="kill-bot-button" onclick="killbot();">Kill bot</button>
+		    </div>
+        </div>
+      <div id='bottom-row' style="display:flex">
 			<!-- Main buttons -->
-		  <div id="bot-status"></div>
-		  <div id="bot-holder">
-		  	<input
-		  		id="meeting-link"
-		  		type="text"
-		  		placeholder="Enter meeting link"
-		  		size="50"
-		  	/>
-		  	<input type="number" name="timeout" id="timeout" size=4 />
-		  	<button id="start-bot-button">Start Bot</button>
-		  	<button id="kill-bot-button" onclick="killbot();">Kill bot</button>
-		  </div>
+			  <button
+			  	class="imgButton"
+			  	id="pause"
+			  	data-state="0"
+			  	onclick="pause();"
+			  	style="background-image: url(./icons/main_msg_pause.png)"
+			  	title="Main — ⏸ Pause incoming chat messages"
+			  ></button>
+			  <button
+			  	class="imgButton"
+			  	id="say_hello"
+			  	data-state="0"
+			  	style="background-image: url(./icons/main_msg_send.png)"
+			  	title="Main — 💬 Send a text message to all social endpoints"
+			  ></button>
+			  <button
+			  	class="imgButton imgSmallButton"
+			  	id="notify"
+			  	data-state="0"
+			  	onclick="notify();"
+			  	style="background-image: url(./icons/main_msg_notify_off.png)"
+			  	title="Main — 🔔 Start beeping when there is a new message"
+			  ></button>
+			  <button
+			  	class="imgButton imgSmallButton hidden"
+			  	id="select_save_file"
+			  	data-state="0"
+			  	onclick="overwriteFile('setup');"
+			  	style="background-image: url(./icons/main_msg_save.png)"
+			  	title="Main — 💾 Select the file you want to save the most recent message to"
+			  ></button>
 
-			<button
-				class="imgButton"
-				id="pause"
-				data-state="0"
-				onclick="pause();"
-				style="background-image: url(./icons/main_msg_pause.png)"
-				title="Main — ⏸ Pause incoming chat messages"
-			></button>
-			<button
-				class="imgButton"
-				id="say_hello"
-				data-state="0"
-				style="background-image: url(./icons/main_msg_send.png)"
-				title="Main — 💬 Send a text message to all social endpoints"
-			></button>
-			<button
-				class="imgButton imgSmallButton"
-				id="notify"
-				data-state="0"
-				onclick="notify();"
-				style="background-image: url(./icons/main_msg_notify_off.png)"
-				title="Main — 🔔 Start beeping when there is a new message"
-			></button>
-			<button
-				class="imgButton imgSmallButton hidden"
-				id="select_save_file"
-				data-state="0"
-				onclick="overwriteFile('setup');"
-				style="background-image: url(./icons/main_msg_save.png)"
-				title="Main — 💾 Select the file you want to save the most recent message to"
-			></button>
+			  <div class="horizontalSeparator"></div>
 
-			<div class="horizontalSeparator"></div>
+			  <!-- Filter buttons -->
 
-			<!-- Filter buttons -->
+			  <button
+			  	class="imgButton"
+			  	id="filter"
+			  	data-state="0"
+			  	style="background-image: url(./icons/filter_msg.png)"
+			  	title="Filter — 🔽 Filter messages based on what you have entered"
+			  ></button>
 
-			<button
-				class="imgButton"
-				id="filter"
-				data-state="0"
-				style="background-image: url(./icons/filter_msg.png)"
-				title="Filter — 🔽 Filter messages based on what you have entered"
-			></button>
+			  <div class="horizontalSeparator"></div>
 
-			<div class="horizontalSeparator"></div>
+			  <!-- Queue buttons -->
+			  <div id="queueSection" class="hidden">
+			  	<button
+			  		class="imgButton"
+			  		id="next_in_queue"
+			  		data-state="0"
+			  		onclick="nextInQueue();"
+			  		style="background-image: url(./icons/queue_show_next.png)"
+			  		title="Queue — ⏭ Feature next message in queue (select messages holding CTRL for add them to the queue)"
+			  	>
+			  		<span id="next_in_queue_badge" class="buttonBadge">0</span>
+			  	</button>
+			  	<button
+			  		class="imgButton imgSmallButton"
+			  		id="show_only_queue"
+			  		data-state="0"
+			  		onclick="filterQueued();"
+			  		style="background-image: url(./icons/queue_show_listonly_off.png)"
+			  		title="Queue — 📑 Show only the messages in queue"
+			  	></button>
+			  	<div class="horizontalSeparator"></div>
+			  </div>
 
-			<!-- Queue buttons -->
-			<div id="queueSection" class="hidden">
-				<button
-					class="imgButton"
-					id="next_in_queue"
-					data-state="0"
-					onclick="nextInQueue();"
-					style="background-image: url(./icons/queue_show_next.png)"
-					title="Queue — ⏭ Feature next message in queue (select messages holding CTRL for add them to the queue)"
-				>
-					<span id="next_in_queue_badge" class="buttonBadge">0</span>
-				</button>
-				<button
-					class="imgButton imgSmallButton"
-					id="show_only_queue"
-					data-state="0"
-					onclick="filterQueued();"
-					style="background-image: url(./icons/queue_show_listonly_off.png)"
-					title="Queue — 📑 Show only the messages in queue"
-				></button>
-				<div class="horizontalSeparator"></div>
-			</div>
+			  <!-- Featured message buttons -->
 
-			<!-- Featured message buttons -->
+			  <button
+			  	class="imgButton"
+			  	id="clear_overlay"
+			  	data-state="0"
+			  	onclick="this.classList.remove('brush');setTimeout(function(ele){ele.classList.add('brush');},0,this);sendDataP2P(false);"
+			  	style="background-image: url(./icons/featured_clear.png)"
+			  	title="Featured — 🧹🌟 Clear the featured message (not this chat)"
+			  ></button>
+			  <button
+			  	class="imgButton"
+			  	id="autoshow"
+			  	data-state="0"
+			  	onclick="autoShow();"
+			  	style="background-image: url(./icons/featured_auto_stop.png)"
+			  	title="Featured — 🌟 Auto-feature messages as they come in"
+			  ></button>
 
-			<button
-				class="imgButton"
-				id="clear_overlay"
-				data-state="0"
-				onclick="this.classList.remove('brush');setTimeout(function(ele){ele.classList.add('brush');},0,this);sendDataP2P(false);"
-				style="background-image: url(./icons/featured_clear.png)"
-				title="Featured — 🧹🌟 Clear the featured message (not this chat)"
-			></button>
-			<button
-				class="imgButton"
-				id="autoshow"
-				data-state="0"
-				onclick="autoShow();"
-				style="background-image: url(./icons/featured_auto_stop.png)"
-				title="Featured — 🌟 Auto-feature messages as they come in"
-			></button>
+			  <div class="horizontalSeparator"></div>
 
-			<div class="horizontalSeparator"></div>
+			  <!-- Text-to-speech buttons -->
 
-			<!-- Text-to-speech buttons -->
+			  <button
+			  	class="imgButton imgSmallButton"
+			  	id="tts"
+			  	data-state="0"
+			  	onclick="tts();"
+			  	style="background-image: url(./icons/tts_incoming_messages_off.png)"
+			  	title="Text-to-speech — 🔊 Start reading incoming messages out-loud with text-to-speech"
+			  ></button>
 
-			<button
-				class="imgButton imgSmallButton"
-				id="tts"
-				data-state="0"
-				onclick="tts();"
-				style="background-image: url(./icons/tts_incoming_messages_off.png)"
-				title="Text-to-speech — 🔊 Start reading incoming messages out-loud with text-to-speech"
-			></button>
-
-			<!-- Scroll button -->
-			<button
-				class="imgButton imgSmallButton"
-				id="jumpto"
-				data-state="0"
-				onclick="jumptoBottom();"
-				style="background-image: url(./icons/scroll_to_bottom_off.png)"
-				title="Scroll to bottom"
-			></button>
-		</div>
+			  <!-- Scroll button -->
+			  <button
+			  	class="imgButton imgSmallButton"
+			  	id="jumpto"
+			  	data-state="0"
+			  	onclick="jumptoBottom();"
+			  	style="background-image: url(./icons/scroll_to_bottom_off.png)"
+			  	title="Scroll to bottom"
+			  ></button>
+      </div>
+    </div>
 		<audio id="testtone" style="display: none" preload="metadata">
 			<source src="./audio/tone.mp3" type="audio/mpeg" />
 			<source src="./audio/tone.ogg" type="audio/ogg" />
