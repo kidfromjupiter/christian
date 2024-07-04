@@ -1734,9 +1734,9 @@
 		<div id="pinned" class="output"></div>
 		<div id="output" class="output"></div>
 		<div id="menu" class="electronDraggable" >
-      <div id='top-row'>
+      <div id='top-row' >
 		    <div id="bot-status"></div>
-		    <div id="bot-holder">
+		    <div id="bot-holder" style="display:flex;align-items: center;">
 		    	<input
 		    		id="meeting-link"
 		    		type="text"
@@ -1745,7 +1745,10 @@
 		    	/>
 		    	<input type="number" name="timeout" id="timeout" size=4 />
 		    	<button id="start-bot-button">Start Bot</button>
-		    	<button id="kill-bot-button" onclick="killbot();">Kill bot</button>
+		    	<button id="kill-bot-button" >Kill bot</button>
+			    <div class="horizontalSeparator"></div>
+		    	<input  type="text"name="filtered_name" id="filtered_name" size="20" placeholder='Filtered name' />
+		    	<button id="filter-name-button" >Filter name</button>
 		    </div>
         </div>
       <div id='bottom-row' style="display:flex">
@@ -2877,7 +2880,7 @@
 
 				socketserver.onopen = function (){
 					conCon = 1;
-          botHolder.style.display = "block";
+          botHolder.style.display = "flex";
     
 				};
 
@@ -4188,13 +4191,24 @@
 					);
 				}
 			};
+      
+      function filtername(){
+
+        socketserver.send(
+					JSON.stringify({
+						type: "filtered.name",
+            name: document.querySelector("#filtered_name").value
+					}))
+      }
       function killbot(){
         socketserver.send(
 					JSON.stringify({
 						type: "bot.kill",
 					})
-    )
-    }
+      )
+      }
+      document.querySelector("#kill-bot-button").onclick = killbot;
+      document.querySelector("#filter-name-button").onclick = filtername;
 			function pause() {
 				pauseState = !pauseState;
 				var ele = document.getElementById("pause");
