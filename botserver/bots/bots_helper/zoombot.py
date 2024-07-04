@@ -129,14 +129,17 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
         )
         settings_button.click()
 
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//div[text()="Always show meeting controls"]'))
-        ).click()
+
+        meeting_controls = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//div[text()="Always show meeting controls"]/..'))
+        )
+        if meeting_controls.get_attribute("aria-checked") != "true":
+            meeting_controls.click()
+
+
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//button[contains(@class,"zm-btn settings-dialog__close")]'))
         ).click()
-
-
 
         # Wait for the div with class "footer-chat-button" to appear
         chat_button = WebDriverWait(driver, 10).until(
@@ -174,19 +177,19 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
 
                         print("spotlight")
                         spotlights = [*args,*spotlights]
-                        spotlight(driver,lg,q,userid,channel_layer,*args)
+                        spotlight(driver,lg,userid,channel_layer,*args)
                     case "unspot":
-                        removespotlights(driver,lg,q,userid,channel_layer,*args)
+                        removespotlights(driver,lg,userid,channel_layer,*args)
                     case "mutebuthost":
-                        mutebuthost(driver,lg,q,userid,channel_layer)
+                        mutebuthost(driver,lg,userid,channel_layer)
                     case "unmuteall":
-                        request_all_to_unmute(driver,lg,q,userid,channel_layer)
+                        request_all_to_unmute(driver,lg,userid,channel_layer)
                     case "mute":
-                        mute(driver,lg,q,userid,channel_layer,*args)
+                        mute(driver,lg,userid,channel_layer,*args)
                     case "muteall":
-                        muteall(driver,lg,q,userid,channel_layer)
+                        muteall(driver,lg,userid,channel_layer)
                     case "cameras":
-                        request_cameras(driver,args,lg,q,userid,channel_layer)
+                        request_cameras(driver,args,lg,userid,channel_layer)
             check_ended(driver)
             now = datetime.now()
             time_difference = now - startTime
