@@ -6,7 +6,7 @@ from .aux import send_status
 from selenium.webdriver.common.by import By  
 from selenium.webdriver.support import expected_conditions as EC  
 from selenium.webdriver.common.action_chains import ActionChains
-
+from selenium.common.exceptions import TimeoutException
 WAIT_BETWEEN_ACTION = 0.5
 is_in_viewport_script = """
     var elem = arguments[0],                 // Element to check
@@ -42,13 +42,40 @@ def spotlight(driver: WebDriver, lg, userid: str, channel_layer,*names) -> None:
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"participants-section-container")]'))
         )
-        participant_search = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//input[contains(@class,"participants-search-box__input")]'))
-        )
+        search_available = True
+        try:
+            participant_search = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, '//input[contains(@class,"participants-search-box__input")]'))
+            )
+        except:
+            search_available = False
 
-        participant_search.send_keys(100*"\b")
-        for name in names:
-            participant_search.send_keys(name)
+        if search_available:
+            participant_search.send_keys(100*"\b")
+            for name in names:
+                participant_search.send_keys(name)
+                participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+                for element in participant_list:
+                    ActionChains(driver).move_to_element(element).click().perform()
+                    sleep(WAIT_BETWEEN_ACTION)
+                    more_button = element.find_element(By.XPATH,".//span[text()='More']")
+                    WebDriverWait(driver,5).until(
+                        EC.element_to_be_clickable(more_button)
+                    )
+                    more_button.click()
+
+                    try:
+                    
+                        spotlight_button = WebDriverWait(driver, 2).until(
+                            EC.presence_of_element_located((By.XPATH, '//button[text()="Spotlight for Everyone" or text()="Add Spotlight"]'))
+                        )
+                        spotlight_button.click()
+                        lg.info("clicked spotlight button")
+                        send_status(userid, "Spotlighted", channel_layer)
+                    except TimeoutException:
+                            lg.error("Spotlight button not found. Likely the user is not a host")
+                participant_search.send_keys(len(name)*"\b")
+        else:
             participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
             for element in participant_list:
                 ActionChains(driver).move_to_element(element).click().perform()
@@ -69,7 +96,7 @@ def spotlight(driver: WebDriver, lg, userid: str, channel_layer,*names) -> None:
                     send_status(userid, "Spotlighted", channel_layer)
                 except TimeoutException:
                         lg.error("Spotlight button not found. Likely the user is not a host")
-            participant_search.send_keys(len(name)*"\b")
+            
     except Exception as e:
         send_status(userid, "Couldn't spotlight. Is bot host or co-host? Does the user have video turned on?", channel_layer)
         driver.save_screenshot("spotlight_error.png")
@@ -127,15 +154,21 @@ def mute(driver: WebDriver, lg, userid: str, channel_layer,*names) -> None:
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"participants-section-container")]'))
     )
-    participant_search = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//input[contains(@class,"participants-search-box__input")]'))
-            )
+    search_available = True
+    try:
+        participant_search = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//input[contains(@class,"participants-search-box__input")]'))
+        )
+    except:
+        search_available = False
     
-    participant_search.send_keys(100*'\b')
+    if search_available:
+        participant_search.send_keys(100*'\b')
 
     try:
         for name in names:
-            participant_search.send_keys(name)
+            if search_available:
+                participant_search.send_keys(name)
             participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
             for element in participant_list:
                 ActionChains(driver).move_to_element(element).click().perform()
@@ -144,7 +177,8 @@ def mute(driver: WebDriver, lg, userid: str, channel_layer,*names) -> None:
                 mute_button.click()
 
             lg.info("clicked mute button")
-            participant_search.send_keys(len(name)*'\b')
+            if search_available:
+                participant_search.send_keys(len(name)*'\b')
         send_status(userid, "Muted", channel_layer)
     except Exception as e:
         driver.save_screenshot("mute_Error.png")
@@ -186,23 +220,32 @@ def request_all_to_unmute(driver: WebDriver, lg, userid: str, channel_layer):
         send_status(userid,"Couldn't request all to unmute. Is bot host or co-host?",channel_layer)
         driver.save_screenshot("requestall_unmute_error.png")
 
+
 def request_cameras(driver: WebDriver,names:list[str], lg, userid: str, channel_layer):
     lg.info("cameras")
     # Get the participant button
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.XPATH, '//div[contains(@class,"participants-section-container")]'))
     )
-    participant_search = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//input[contains(@class,"participants-search-box__input")]'))
-            )
-    participant_search.send_keys(100*"\b")
-
+    search_available = True
+    try:
+        participant_search = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//input[contains(@class,"participants-search-box__input")]'))
+        )
+    except:
+        search_available = False
+    if search_available:
+        participant_search.send_keys(100*"\b")
     try:
         if len(names) > 0:
             for name in names:
-                participant_search.send_keys(name)
+                if search_available:
+                    participant_search.send_keys(name)
                 participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
                 for element in participant_list:
+                    if not search_available and name not in element.text:
+                        return
+                        
                     ActionChains(driver).move_to_element(element).click().perform()
                     sleep(WAIT_BETWEEN_ACTION)
                     more_button = element.find_element(By.XPATH,".//span[text()='More']")
@@ -213,7 +256,8 @@ def request_cameras(driver: WebDriver,names:list[str], lg, userid: str, channel_
                     WebDriverWait(driver, 10).until(
                         EC.presence_of_element_located((By.XPATH, '//button[text()="Ask For Start Video"]'))
                     ).click()
-                participant_search.send_keys(len(name)*"\b")
+                if search_available:
+                    participant_search.send_keys(len(name)*"\b")
         else:
             id_list = []
             participant_container = driver.find_element(By.XPATH,"//div[contains(@class,'participants-list-container participants-ul')]")
@@ -222,6 +266,39 @@ def request_cameras(driver: WebDriver,names:list[str], lg, userid: str, channel_
             driver.execute_script("arguments[0].scrollTop = 0;",participant_container)
 
             scrollTop = 0
+            if scrollTop + offsetHeight == scrollHeight:
+                participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+                for element in participant_list:
+
+                    send_status(userid,"Requesting Camera from participants",channel_layer)
+                    #checking whether we already checked this participant
+                    element_id = element.find_element(By.XPATH,".//div[contains(@class,'participants-li')]").get_attribute("id")
+                    if element_id not in id_list:
+                        #getting the position of element relative to parent viewport. If above, do nothing, if below, scroll down. If within, do the thing
+                        relative_pos = driver.execute_script(is_above_or_below_script, element, participant_container) 
+                        if relative_pos == 'below':
+                            # break out of for loop, which will cause a scroll down
+                            break
+                        if relative_pos == "within":
+                            # do some stuff
+                            ActionChains(driver).move_to_element(element).click().perform()
+                            id_list.append(element_id)
+                            sleep(WAIT_BETWEEN_ACTION)
+
+                            try:
+                                more_button = element.find_element(By.XPATH,".//span[text()='More']")
+                                WebDriverWait(driver,2).until(
+                                    EC.element_to_be_clickable(more_button)
+                                )
+                                more_button.click()
+                                WebDriverWait(driver, 2).until(
+                                    EC.presence_of_element_located((By.XPATH, '//button[text()="Ask For Start Video"]'))
+                                ).click()
+                            except:
+                                pass
+
+                sleep(0.5)
+            #need to scroll
             while scrollTop + offsetHeight < scrollHeight:
                 scrollTop = driver.execute_script("return arguments[0].scrollTop;",participant_container)
                 participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
@@ -262,6 +339,7 @@ def request_cameras(driver: WebDriver,names:list[str], lg, userid: str, channel_
         print(e)
         driver.save_screenshot("request_start_Video_error.png")
 
+
 def mutebuthost(driver: WebDriver,lg, userid: str, channel_layer):
     lg.info("cameras")
     # Get the participant button
@@ -278,6 +356,34 @@ def mutebuthost(driver: WebDriver,lg, userid: str, channel_layer):
         driver.execute_script("arguments[0].scrollTop = 0;",participant_container)
 
         scrollTop = 0
+        if scrollTop + offsetHeight == scrollHeight:
+            #dont need to scroll. so scroll logic is not required
+            participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
+            for element in participant_list:
+                send_status(userid,"Muting people",channel_layer)
+                #checking whether we already checked this participant
+                element_id = element.find_element(By.XPATH,".//div[contains(@class,'participants-li')]").get_attribute("id")
+                if element_id not in id_list:
+                    # do some stuff
+                    try:
+                        id_list.append(element_id)
+                        matches = re.findall(r'\([^()]*\)',element.text)
+                        participant_is_host = False
+                        for match in matches:
+                            if "Host" in match:
+                                participant_is_host = True
+                                # this is a host. go to the next participant
+                        if not participant_is_host:
+                            ActionChains(driver).move_to_element(element).click().perform()
+                            sleep(WAIT_BETWEEN_ACTION)
+                            mute_button = element.find_element(By.XPATH,".//button[text()='Mute']")
+                            WebDriverWait(driver,0.5).until(
+                                EC.element_to_be_clickable(mute_button)
+                            )
+                            ActionChains(driver).move_to_element(mute_button).click_and_hold().pause(0.25).release().perform()
+                    except:
+                        pass
+
         while scrollTop + offsetHeight < scrollHeight:
             scrollTop = driver.execute_script("return arguments[0].scrollTop;",participant_container)
             participant_list = driver.find_elements(By.XPATH,"//div[@class='participants-item-position']")
