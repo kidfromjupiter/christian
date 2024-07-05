@@ -6,7 +6,6 @@ from .aux import send_status
 from selenium.webdriver.common.by import By  
 from selenium.webdriver.support import expected_conditions as EC  
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import TimeoutException
 
 WAIT_BETWEEN_ACTION = 0.5
 is_in_viewport_script = """
@@ -22,18 +21,18 @@ is_in_viewport_script = """
     );
     """
 is_above_or_below_script = """
-var elem = arguments[0],                 // Element to check
-    parent = arguments[1],               // Parent element
-    elemRect = elem.getBoundingClientRect(),
-    parentRect = parent.getBoundingClientRect();
-
-if (elemRect.bottom < parentRect.top) {
-    return 'above';
-} else if (elemRect.bottom > parentRect.bottom) {
-    return 'below';
-} else {
-    return 'within';
-}
+    var elem = arguments[0],                 // Element to check
+        parent = arguments[1],               // Parent element
+        elemRect = elem.getBoundingClientRect(),
+        parentRect = parent.getBoundingClientRect();
+    
+    if (elemRect.bottom < parentRect.top) {
+        return 'above';
+    } else if (elemRect.bottom > parentRect.bottom) {
+        return 'below';
+    } else {
+        return 'within';
+    }
 """
     
 def spotlight(driver: WebDriver, lg, userid: str, channel_layer,*names) -> None:

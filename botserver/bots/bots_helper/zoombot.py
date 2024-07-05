@@ -50,7 +50,7 @@ def run_zoombot(meeting_link,userid,timeout,q:Queue):
     send_status(userid,"Bot started",channel_layer)
     #retrying for 3 times if theres an error
     try:
-        meeting_id = re.search(r'(?<=j/)\d+', meeting_link).group()
+        meeting_id = re.search(r'(?<=wc/)\d+', meeting_link).group()
         password = re.search(r'(?<=pwd=)[^&]*', meeting_link).group()
 
         driver.get(f"https://app.zoom.us/wc/{meeting_id}/join?pwd={password}")
