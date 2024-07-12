@@ -7400,7 +7400,7 @@
 				try {
 					if (socketserver) {
 						// send a copy to the remote API
-    socketserver.send(JSON.stringify({type:"chat.message",message:JSON.stringify({...data,feature:true})}));
+             socketserver.send(JSON.stringify({type:"chat.message",message:JSON.stringify({...data,feature:true})}));
 					}
 					iframes.forEach((iframe) => {
 						var msg = {};

@@ -43,7 +43,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         if "message" in text_data_json.keys():
             message = json.loads(text_data_json["message"])
             command:str = ""
-            if message["chatmessage"][0] == "!" :
+            if "chatmessage" in message.keys() and  message["chatmessage"][0] == "!" :
                 command = message["chatmessage"][1:]
                 cmd, *args = command.split("#")
                 if cmd == "filter":

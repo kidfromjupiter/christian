@@ -1340,9 +1340,13 @@
 
 						if ("content" in data) {
                //if the message doesnt have feauture == true, reject the message. We only want featured messages here
-                if (!data.content.feature){
-                  return
-                }
+              if (!data.content.feature){
+                return
+              }
+              if (data.content.feature && !Object.keys(data.content).includes("chatmessage")){
+              // has feature but doesnt have chatmessage. So this is for an unfeaturing
+								processData({ contents: false });
+              }
 							if (data.content) {
 								processData({ contents: data.content });
 							} else {
