@@ -15,7 +15,7 @@ import logging as lg
 from multiprocessing import Queue
 lg.basicConfig(level=lg.DEBUG, filename="py_log.log",filemode="w")
 
-NAME="Studioheld.in"
+NAME="Meetingheld.in"
 WAIT_ADMIT_TIME = 120
 MESSAGE_POLL_RATE = 0.1
 

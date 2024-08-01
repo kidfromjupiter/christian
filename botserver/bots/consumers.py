@@ -1,15 +1,14 @@
 import json
-from channels.generic.websocket import AsyncWebsocketConsumer
-from multiprocessing import Process,Queue
+from multiprocessing import Process, Queue
 
-from django.utils import timezone
-from bots.bots_helper.teamsbot import run_teamsbot
-from bots.bots_helper.zoombot import run_zoombot
-from bots.bots_helper.teamsbot_v2 import run_teamsbot as run_teamsbot_v2
 import psutil
-from channels.db import database_sync_to_async
-
+from bots.bots_helper.teamsbot import run_teamsbot
+from bots.bots_helper.teamsbot_v2 import run_teamsbot as run_teamsbot_v2
+from bots.bots_helper.zoombot import run_zoombot
 from bots.models import UserId
+from channels.generic.websocket import AsyncWebsocketConsumer
+from django.utils import timezone
+
 
 def killtree(pid, including_parent=True):
     parent = psutil.Process(pid)
@@ -19,13 +18,14 @@ def killtree(pid, including_parent=True):
     if including_parent:
         parent.kill()
 
+
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user_id = self.scope["url_route"]["kwargs"]["user_id"]
         self.room_group_name = f"{self.user_id}"
         try:
             user = await UserId.objects.aget(id=self.user_id)
-            if user.expiry_date > timezone.now():     
+            if user.expiry_date > timezone.now():
                 # Join room group
                 await self.channel_layer.group_add(self.room_group_name, self.channel_name)
                 self.filtered = ""
@@ -39,19 +39,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     # Receive message from WebSocket
     async def receive(self, text_data):
-        text_data_json:dict = json.loads(text_data)
+        text_data_json: dict = json.loads(text_data)
         if "message" in text_data_json.keys():
             message = json.loads(text_data_json["message"])
-            command:str = ""
-            if "chatmessage" in message.keys() and  message["chatmessage"][0] == "!" :
+            command: str = ""
+            if "chatmessage" in message.keys() and message["chatmessage"][0] == "!":
                 command = message["chatmessage"][1:]
                 cmd, *args = command.split("#")
                 if cmd == "filter":
                     await self.channel_layer.group_send(
-                        self.room_group_name,{"type":"filtered.name","name":args[0]}
+                        self.room_group_name, {"type": "filtered.name", "name": args[0]}
                     )
                     return
-                if hasattr(self,"q") :
+                if hasattr(self, "q"):
                     if command == 'muteme':
                         self.q.put(f'mute#{self.filtered}')
                         return
@@ -59,31 +59,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     self.q.put(command.rstrip())
                 return
         # force kill the bot
-        if text_data_json['type'] == 'bot.kill' and hasattr(self,"botprocess") :
+        if text_data_json['type'] == 'bot.kill' and hasattr(self, "botprocess"):
             if self.botprocess != None and self.botprocess.is_alive():
                 killtree(self.botprocess.pid)
                 await self.channel_layer.group_send(
-                    self.room_group_name, {"type":"bot.status","status":"Bot killed forcefully"}
+                    self.room_group_name, {"type": "bot.status", "status": "Bot killed forcefully"}
                 )
             return
         # Send message to room group
         if text_data_json["type"] == "bot.start":
             self.q = Queue()
             url = text_data_json["url"]
-            bot_timeout = int(text_data_json["timeout"] if text_data_json["timeout"] != "" else 0) #timeout in number of hours
+            bot_timeout = int(
+                text_data_json["timeout"] if text_data_json["timeout"] != "" else 0)  # timeout in number of hours
             if hasattr(self, 'botprocess'):
                 if self.botprocess != None and self.botprocess.is_alive():
                     killtree(self.botprocess.pid)
                     self.botprocess = None
-            if "teams.live.com"in url or "teams.microsoft.com" in url:
+            if "teams.live.com" in url or "teams.microsoft.com" in url:
                 if "meetup-join" in url:
-                    self.botprocess = Process(target=run_teamsbot_v2, args=(url,self.user_id,bot_timeout if bot_timeout > 0 else 12,self.q))
+                    self.botprocess = Process(target=run_teamsbot_v2,
+                                              args=(url, self.user_id, bot_timeout if bot_timeout > 0 else 12, self.q))
                     self.botprocess.start()
                 else:
-                    self.botprocess = Process(target=run_teamsbot, args=(url,self.user_id,bot_timeout if bot_timeout > 0 else 12,self.q))
+                    self.botprocess = Process(target=run_teamsbot,
+                                              args=(url, self.user_id, bot_timeout if bot_timeout > 0 else 12, self.q))
                     self.botprocess.start()
             if "zoom.us" in url:
-                self.botprocess = Process(target=run_zoombot, args=(url,self.user_id,bot_timeout if bot_timeout > 0 else 12,self.q))
+                self.botprocess = Process(target=run_zoombot,
+                                          args=(url, self.user_id, bot_timeout if bot_timeout > 0 else 12, self.q))
                 self.botprocess.start()
             await self.channel_layer.group_send(
                 self.room_group_name, {"type": "bot.status", "status": "Bot process launched"}
@@ -101,9 +105,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         message = json.loads(event["message"])
-        message['filtered_name']  = self.filtered
+        message['filtered_name'] = self.filtered
         # Send message to WebSocket
         await self.send(text_data=json.dumps({"message": json.dumps(message)}))
 
-    async def bot_status(self,event):
+    async def bot_status(self, event):
         await self.send(text_data=json.dumps(event))
