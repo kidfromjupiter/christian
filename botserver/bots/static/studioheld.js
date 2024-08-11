@@ -1143,14 +1143,22 @@ function setupSocket() {
 			}
 			if (data.message) {
 				data.message = JSON.parse(data.message);
-				outputelement.innerHTML +=
+        console.log(data)
+        if (data.message.feature) {
+          
+				outputelement.innerHTML =
 					"<div>" +
 					data.message.chatname +
 					": " +
 					data.message.chatmessage +
 					"</div>";
+        }
+        if (!data.message.chatname || !data.message.id){
+          outputelement.innerHTML = ""
+        }
 			}
 		}
 	});
 }
 setupSocket();
+
