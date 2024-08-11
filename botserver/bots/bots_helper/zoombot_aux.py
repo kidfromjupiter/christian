@@ -71,7 +71,7 @@ def spotlight(driver: WebDriver, lg, userid: str, channel_layer, *names) -> None
 
                         spotlight_button = WebDriverWait(driver, 2).until(
                             EC.presence_of_element_located(
-                                (By.XPATH, '//button[text()="Spotlight for Everyone" or text()="Add Spotlight"]'))
+                                (By.XPATH, '//button[text()="Spotlight for Everyone" or text()="Replace Spotlight"]'))
                         )
                         spotlight_button.click()
                         lg.info("clicked spotlight button")
@@ -96,7 +96,7 @@ def spotlight(driver: WebDriver, lg, userid: str, channel_layer, *names) -> None
                     try:
                         spotlight_button = WebDriverWait(driver, 2).until(
                             EC.presence_of_element_located(
-                                (By.XPATH, '//button[text()="Spotlight for Everyone" or text()="Add Spotlight"]'))
+                                (By.XPATH, '//button[text()="Spotlight for Everyone" or text()="Replace Spotlight"]'))
                         )
                         spotlight_button.click()
                         lg.info("clicked spotlight button")
@@ -113,34 +113,12 @@ def spotlight(driver: WebDriver, lg, userid: str, channel_layer, *names) -> None
 
 def removespotlights(driver: WebDriver, lg, userid: str, channel_layer):
     try:
+        ActionChains(driver).move_to_element(driver.find_element(By.XPATH,"//video-player-container"))
+        sleep(0.5)
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//button[text()="Remove Spotlight"]'))
+        ).click()
         lg.info("removing spotlights")
-        # setting gallery view
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//span[text()="View"]'))
-        ).click()
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//a[text()="Gallery View"]'))
-        ).click()
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//div[@class="gallery-video-container__main-view"]'))
-        )
-        spotlight_participant_frames = driver.find_elements(By.XPATH,
-                                                            "//i[contains(@class, 'spotlight-icon')]/ancestor::*[contains(@class, 'gallery-video-container__video-frame')]")
-
-        for frame in spotlight_participant_frames:
-            try:
-                WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable(frame)
-                )
-                ActionChains(driver).move_to_element(frame).click().perform()
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, ".//button[@aria-label='More managing options']"))
-                ).click()
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[text()="Remove Spotlight"]'))
-                ).click()
-            except:
-                lg.error("UnSpotlight button not found. Likely the bot is not a host/co-host")
 
     except Exception as e:
         lg.error(e)
