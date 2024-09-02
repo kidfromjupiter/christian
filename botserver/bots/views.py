@@ -9,6 +9,9 @@ def dock(request,*args,**kwargs):
     return render(request, "botroom/dock_original.html")
 
 def index(request,*args,**kwargs):
+    return render(request, "botroom/custom_index.html")
+
+def index2(request,*args,**kwargs):
     return render(request, "botroom/index_original.html")
     
 def studioheld(request,*args,**kwargs):

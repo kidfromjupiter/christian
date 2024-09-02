@@ -29,6 +29,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 # Join room group
                 await self.channel_layer.group_add(self.room_group_name, self.channel_name)
                 self.filtered = ""
+                print("Should accept connection")
                 await self.accept()
         except UserId.DoesNotExist:
             await self.close()

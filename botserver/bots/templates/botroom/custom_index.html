@@ -1,0 +1,223 @@
+<html style="font-size: 10px; font-family: Roboto, Arial, sans-serif">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+  <meta content="utf-8" http-equiv="encoding"/>
+  <title>Studioheld.in</title>
+  <meta name="title" content="Studioheld.in"/>
+  <link rel="icon" href="./icons/favicon.ico"/>
+  <link
+          rel="preload"
+          href="./thirdparty/NotoColorEmoji.ttf"
+          as="font"
+          type="font/ttf"
+          crossorigin="anonymous"
+  />
+</head>
+<style>
+    body {
+        /*padding-left: 192px;*/
+        /*padding-right: 192px;*/
+        padding: 20px;
+    }
+
+    #output {
+        margin-left: 15px;
+        min-height: 149px;
+        transition: all 0.5s cubic-bezier(0.25, 0.25, 0.105, 1.2);
+        position: absolute;
+        bottom: 30px;
+    }
+
+    .nameholder {
+        font-size: 30px;
+        font-weight: 700;
+        padding: 10px;
+        position: absolute;
+        top: -20px;
+        text-wrap: nowrap;
+        background-color: rgb(255, 165, 0)
+    }
+
+    .contentholder {
+        color: white;
+        padding: 20px 35px 20px 35px;
+        font-size: 40px;
+        font-weight: 600;
+        background-color: rgb(34, 34, 34)
+    }
+</style>
+<body>
+<div id="output" class="output"></div>
+</body>
+<script>
+    var roomID = "test";
+    var color1 = ""
+    var color2 = ""
+    var fontcolor1 = ''
+    var fontcolor2 = ''
+    var rounded = ''
+
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has("session")) {
+        roomID = urlParams.get("session");
+    } else if (urlParams.has("s")) {
+        roomID = urlParams.get("s");
+    } else if (urlParams.has("id")) {
+        roomID = urlParams.get("id");
+    } else {
+        roomID = prompt("Enter your session ID here, or add it to the URL.");
+    }
+
+    var socketserver = false;
+    var serverURL =
+        "ws://" + window.location.host + "/ws/bots/" + roomID + "/";
+    var reconnectionTimeout = null;
+
+    function setupSocket(allin = false) {
+        if (reconnectionTimeout) {
+            clearTimeout(reconnectionTimeout);
+            reconnectionTimeout = null;
+        }
+
+        if (socketserver) {
+            socketserver.onclose = null;
+            socketserver.close();
+            socketserver = null;
+        }
+
+        socketserver = new WebSocket(serverURL);
+
+        socketserver.onclose = function () {
+            reconnectionTimeout = setTimeout(function () {
+                conCon += 1;
+                setupSocket(allin);
+            }, 100 * conCon);
+        };
+
+        socketserver.onerror = function (error) {
+            console.error("WebSocket error:", error);
+            socketserver.close();
+        };
+
+        socketserver.addEventListener("message", function (event) {
+            if (event.data) {
+                if (typeof event.data !== "object") {
+                    var data = JSON.parse(event.data);
+                } else {
+                    data = event.data;
+                }
+                if (data.message) {
+                    var msg = data.message;
+                    data.content = JSON.parse(msg);
+                }
+
+                if (data == false) {
+                    processData({contents: false});
+                    return;
+                }
+
+                if (!data || !("contents" in data)) {
+                    if (!("action" in data) && "chatmessage" in data) {
+                        processData({contents: data});
+                    }
+                } else {
+                    processData(data);
+                }
+                if (!data.content.feature) {
+                    return
+                }
+                processData(data)
+            }
+        });
+    }
+
+    setupSocket();
+    var holder = document.querySelector("#output")
+
+    function processData(data) {
+
+        if (!data.content.chatmessage){
+            holder.innerHTML = ""  
+            return
+        } 
+        holder.innerHTML = `
+				<div class='message' style="position: relative; padding: 20px">
+					<div  class="nameholder">${data.content.chatname}</div>
+					<div  class="contentholder">${data.content.chatmessage}</div>
+				</div>	
+			`
+
+        updateStyles();
+        console.log(data)
+
+    }
+
+    function updateStyles() {
+        var params = new URLSearchParams(window.location.search);
+        // Get elements
+        const smallBox = document.querySelector('.nameholder');
+        const bigBox = document.querySelector('.contentholder');
+        const message = document.querySelector('.message');
+
+        // Color and font parameters
+        if (params.has('color1')) smallBox.style.backgroundColor = `#${params.get('color1')}`;
+        if (params.has('color2')) bigBox.style.backgroundColor = `#${params.get('color2')}`;
+        if (params.has('fontcolor1')) smallBox.style.color = `#${params.get('fontcolor1')}`;
+        if (params.has('fontcolor2')) bigBox.style.color = `#${params.get('fontcolor2')}`;
+        if (params.has('font')) {
+            smallBox.style.fontFamily = params.get('font');
+            bigBox.style.fontFamily = params.get('font');
+        }
+
+        // Rounded corners
+        if (params.has('rounded')) {
+            const radius = `${params.get('rounded')}px`;
+            smallBox.style.borderRadius = radius;
+            bigBox.style.borderRadius = radius;
+        }
+
+        // Box position adjustments
+        if (params.has('y')) {
+            const y = parseInt(params.get('y'), 10);
+            message.style.top = `${y}px`;
+            
+        }
+        if (params.has('x')) {
+            const x = parseInt(params.get('x'), 10);
+            message.style.left = `${x}px`;
+        }
+
+        // Background for chroma key or lumakey
+        if (params.has('chroma')) document.body.style.backgroundColor = 'green';
+        if (params.has('black')) document.body.style.backgroundColor = 'black';
+
+        // Show first names only
+        if (params.has('firstnames')) {
+            document.querySelectorAll('.nameholder').forEach(box => {
+                box.textContent = box.textContent.split(' ')[0]; // Split by space and take the first word
+            });
+        }
+
+        // Hide name boxes
+        if (params.has('hidenames')) {
+            document.querySelectorAll('.nameholder').forEach(box => {
+                box.style.display = 'none';
+            });
+        }
+
+        // Fade effect for messages
+        if (params.has('fade')) {
+            document.querySelectorAll('.message').forEach(message => {
+                setTimeout(() => {
+                    message.style.transition = 'opacity 1s';
+                    message.style.opacity = '0'; // Example fade-out effect
+                }, 1000); // Example fade-in effect
+            });
+        }
+    }
+
+    // Call the function to apply styles
+</script>
+</html>
+
