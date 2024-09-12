@@ -68,7 +68,7 @@
     } else {
         roomID = prompt("Enter your session ID here, or add it to the URL.");
     }
-
+    var fadeTimeout = null;
     var socketserver = false;
     var serverURL =
         "ws://" + window.location.host + "/ws/bots/" + roomID + "/";
@@ -133,21 +133,39 @@
     }
 
     setupSocket();
+
+    // Background for chroma key or lumakey
+    if (urlParams.has('chroma')) document.body.style.backgroundColor = '#40FF00';
+    if (urlParams.has('black')) document.body.style.backgroundColor = 'black';
+
     var holder = document.querySelector("#output")
 
     function processData(data) {
-
-        if (!data.content.chatmessage){
-            holder.innerHTML = ""  
+        let prevMsg = document.querySelector('.message');
+        if (prevMsg) {
+            prevMsg.style.opacity = '0'
+        }
+        
+        if (!data.content.chatmessage) {
+            holder.innerHTML = ""
             return
-        } 
+        }
+
         holder.innerHTML = `
-				<div class='message' style="position: relative; padding: 20px">
+				<div class='message' style="position: relative; padding: 20px; opacity: 0; transition: all 1s ease-in-out;">
 					<div  class="nameholder">${data.content.chatname}</div>
 					<div  class="contentholder">${data.content.chatmessage}</div>
 				</div>	
 			`
 
+        const message = document.querySelector('.message');
+        // message.style.opacity = '1'; //  fade-in effect
+        setTimeout(() => {
+            message.style.opacity = '1'; //  fade-in effect
+        }, 10)
+        if (fadeTimeout) {
+            clearTimeout(fadeTimeout)
+        }
         updateStyles();
         console.log(data)
 
@@ -155,6 +173,7 @@
 
     function updateStyles() {
         var params = new URLSearchParams(window.location.search);
+
         // Get elements
         const smallBox = document.querySelector('.nameholder');
         const bigBox = document.querySelector('.contentholder');
@@ -181,16 +200,13 @@
         if (params.has('y')) {
             const y = parseInt(params.get('y'), 10);
             message.style.top = `${y}px`;
-            
+
         }
         if (params.has('x')) {
             const x = parseInt(params.get('x'), 10);
             message.style.left = `${x}px`;
         }
 
-        // Background for chroma key or lumakey
-        if (params.has('chroma')) document.body.style.backgroundColor = 'green';
-        if (params.has('black')) document.body.style.backgroundColor = 'black';
 
         // Show first names only
         if (params.has('firstnames')) {
@@ -209,10 +225,9 @@
         // Fade effect for messages
         if (params.has('fade')) {
             document.querySelectorAll('.message').forEach(message => {
-                setTimeout(() => {
-                    message.style.transition = 'opacity 1s';
-                    message.style.opacity = '0'; // Example fade-out effect
-                }, 1000); // Example fade-in effect
+                fadeTimeout = setTimeout(() => {
+                    message.style.opacity = '0'; //fade-out effect
+                }, 20000);
             });
         }
     }
