@@ -36,7 +36,8 @@
         position: absolute;
         top: -20px;
         text-wrap: nowrap;
-        background-color: rgb(255, 165, 0)
+        background-color: rgb(255, 165, 0);
+        z-index: 10;
     }
 
     .contentholder {
@@ -44,7 +45,9 @@
         padding: 20px 35px 20px 35px;
         font-size: 40px;
         font-weight: 600;
-        background-color: rgb(34, 34, 34)
+        background-color: rgb(34, 34, 34);
+        max-height: 33vh;
+        overflow-y: hidden;
     }
 </style>
 <body>
@@ -145,16 +148,20 @@
         if (prevMsg) {
             prevMsg.style.opacity = '0'
         }
-        
+
         if (!data.content.chatmessage) {
             holder.innerHTML = ""
             return
         }
 
         holder.innerHTML = `
-				<div class='message' style="position: relative; padding: 20px; opacity: 0; transition: all 1s ease-in-out;">
+				<div class='message' style="position: relative; padding: 20px; opacity: 0; transition: all 1s ease-in-out; ">
 					<div  class="nameholder">${data.content.chatname}</div>
-					<div  class="contentholder">${data.content.chatmessage}</div>
+					<div  class="contentholder">
+					<div class="content">
+					${data.content.chatmessage}
+					</div>
+					</div>
 				</div>	
 			`
 
@@ -167,8 +174,20 @@
             clearTimeout(fadeTimeout)
         }
         updateStyles();
+        autoSize()
         console.log(data)
 
+    }
+
+    function autoSize() {
+        let content = document.querySelector(".content")
+        let contentHolder = document.querySelector(".contentHolder")
+        let i = 0
+        while (content.clientHeight + 40 > contentHolder.clientHeight) {
+
+            content.style.fontSize = `${40 - i}px`
+            i++
+        }
     }
 
     function updateStyles() {
