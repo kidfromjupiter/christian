@@ -50,17 +50,6 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
         url = driver.current_url
         lg.info(f"Current URL: {url}")
 
-        if "meetup-join" not in url:
-            lg.info("not meetup join type")
-            # Get the iframe with id containing "experience-container"
-            experience_container_iframe = WebDriverWait(driver, 60).until(
-                EC.presence_of_element_located((By.XPATH, '//iframe[contains(@id, "experience-container")]'))
-            )
-            lg.info("got iframe")
-
-            # Switch to the iframe
-            driver.switch_to.frame(experience_container_iframe)
-            lg.info("switched to iframe")
         if not settings.DEV:
             mic_mute = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.XPATH, '//div[@title="Microphone"]/div'))
