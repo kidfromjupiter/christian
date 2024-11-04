@@ -50,17 +50,17 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
         url = driver.current_url
         lg.info(f"Current URL: {url}")
 
-        if not settings.DEV:
-            lg.info("Muting mic and cameras")
-            mic_mute = WebDriverWait(driver, 60).until(
-                EC.presence_of_element_located((By.XPATH, '//div[@title="Microphone"]/div'))
-            )
-            mic_mute.click()
-            cam_off = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.XPATH, '//div[@title="Camera"]/div'))
-            )
-            sleep(2)
-            cam_off.click()
+        # if not settings.DEV:
+        #     lg.info("Muting mic and cameras")
+        #     mic_mute = WebDriverWait(driver, 60).until(
+        #         EC.presence_of_element_located((By.XPATH, '//div[@title="Microphone"]/div'))
+        #     )
+        #     mic_mute.click()
+        #     cam_off = WebDriverWait(driver, 10).until(
+        #         EC.presence_of_element_located((By.XPATH, '//div[@title="Camera"]/div'))
+        #     )
+        #     sleep(2)
+        #     cam_off.click()
 
         input_element = WebDriverWait(driver, 60).until(
             EC.presence_of_element_located((By.XPATH, '//input[@type="text"][@placeholder="Type your name"]'))
