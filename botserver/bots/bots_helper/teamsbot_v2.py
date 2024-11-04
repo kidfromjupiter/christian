@@ -51,6 +51,7 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
         lg.info(f"Current URL: {url}")
 
         if not settings.DEV:
+            lg.info("Muting mic and cameras")
             mic_mute = WebDriverWait(driver, 60).until(
                 EC.presence_of_element_located((By.XPATH, '//div[@title="Microphone"]/div'))
             )
