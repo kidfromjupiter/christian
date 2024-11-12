@@ -1744,6 +1744,7 @@
 		    		size="50"
 		    	/>
 		    	<input type="number" name="timeout" placeholder="Bot timeout" id="timeout" size=8 />
+                <button id="paste-button" >Paste link</button>
 		    	<button id="start-bot-button">Start Bot</button>
 		    	<button id="kill-bot-button" >Kill bot</button>
 			    <div class="horizontalSeparator"></div>
@@ -1995,6 +1996,20 @@
 		</div>
 
 		<script>
+            document.getElementById("paste-button").addEventListener("click", async () => {
+                const output = document.getElementById("meeting-link");
+                output.focus();
+
+                // Execute the paste command
+                const successful = document.execCommand("paste");
+
+                if (!successful) {
+                    console.error("Paste command failed or is not supported in this context.");
+                    const text = await navigator.clipboard.readText();
+                    output.value = text;
+                    console.info("Used navigator clipboard API");
+                }
+            });
 			window.onerror = function backupErr(
 				errorMsg,
 				url = false,
