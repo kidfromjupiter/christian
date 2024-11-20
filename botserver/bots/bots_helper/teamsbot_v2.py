@@ -7,7 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 
-from .teamsbox_v2_aux import spotlight, unspotall
+from .teamsbox_v2_aux import spotlight, unspotall, send_to_chat
 from .aux import Message,send_message,send_status
 from channels.layers import get_channel_layer
 from datetime import datetime
@@ -143,6 +143,9 @@ def run_teamsbot(meeting_link,userid,timeout,q:Queue):
                         spotlight(driver,lg,q,userid,channel_layer,*args)
                     case "unspot":
                         unspotall(driver,lg,q,userid,channel_layer,args)
+                    case "message":
+                        msg = " ".join(args)
+                        send_to_chat(driver,msg)
 
             now = datetime.now()
             time_difference = now - startTime

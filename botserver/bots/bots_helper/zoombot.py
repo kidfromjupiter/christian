@@ -175,6 +175,9 @@ def run_zoombot(meeting_link, userid, timeout, q: Queue):
                         print("spotlight")
                         spotlights = [*args, *spotlights]
                         spotlight(driver, lg, userid, channel_layer, *args)
+                    case "message":
+                        msg = " ".join(args)
+                        removespotlights(driver, msg, lg, )
                     case "unspot":
                         removespotlights(driver, lg, userid, channel_layer)
                     case "mutebuthost":

@@ -4,6 +4,7 @@ from time import sleep
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -113,7 +114,7 @@ def spotlight(driver: WebDriver, lg, userid: str, channel_layer, *names) -> None
 
 def removespotlights(driver: WebDriver, lg, userid: str, channel_layer):
     try:
-        ActionChains(driver).move_to_element(driver.find_element(By.XPATH,"//video-player-container"))
+        ActionChains(driver).move_to_element(driver.find_element(By.XPATH, "//video-player-container"))
         sleep(0.5)
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.XPATH, '//button[text()="Remove Spotlight"]'))
@@ -162,7 +163,7 @@ def mute(driver: WebDriver, lg, userid: str, channel_layer, *names) -> None:
                     sleep(WAIT_BETWEEN_ACTION)
                     mute_button = element.find_element(By.XPATH, ".//button[text()='Mute']")
                     mute_button.click()
-           
+
         send_status(userid, "Muted", channel_layer)
     except Exception as e:
         driver.save_screenshot("mute_Error.png")
@@ -419,3 +420,16 @@ def mutebuthost(driver: WebDriver, lg, userid: str, channel_layer):
     except Exception as e:
         lg.error(e)
         driver.save_screenshot("mute_but_host_error.png")
+
+
+def send_message(driver: WebDriver, message: str, lg):
+    try:
+        chat_container = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//div[contains(@class,"chat-rtf-box__editor-wrapper")//*[@contenteditable="true"]]'))
+        )
+        chat_container.click()
+        chat_container.send_keys(message)
+        chat_container.send_keys(Keys.RETURN)
+    except Exception as e:
+        lg.error(e)
