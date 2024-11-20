@@ -426,7 +426,7 @@ def send_msg_to_chat(driver: WebDriver, message: str, lg):
     try:
         chat_container = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located(
-                (By.XPATH, '//div[contains(@class,"chat-rtf-box__editor-wrapper")//*[@contenteditable="true"]]'))
+                (By.XPATH, '//div[contains(@class,"chat-rtf-box__editor-wrapper")]//*[@contenteditable="true"]'))
         )
         chat_container.click()
         chat_container.send_keys(message)
