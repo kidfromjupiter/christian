@@ -250,6 +250,26 @@
             });
         }
     }
+    let lastTap = 0;
+    document.body.addEventListener('touchend', function(event) {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        if (tapLength < 500 && tapLength > 0) {
+            toggleFullScreen();
+            event.preventDefault();
+        }
+        lastTap = currentTime;
+    });
+
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+    }
 
     // Call the function to apply styles
 </script>

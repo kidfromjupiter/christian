@@ -1,6 +1,7 @@
 from multiprocessing import Queue
 from time import sleep
 
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -68,16 +69,31 @@ def spotlight(driver: WebDriver, lg, q: Queue, userid: str, channel_layer, *name
 def unspotall(driver: WebDriver, lg, q: Queue, userid: str, channel_layer, *names: list[str]):
     switch_to_participant(driver)
     try:
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//div[@data-tid='calling-right-side-panel']//button[@data-tid='more-menu-trigger']"))
-        ).click()
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//span[text()='Stop all spotlights']"))
-        ).click()
-        WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//button[@data-tid='confirm-spotlight-change-button']"))
-        ).click()
+        # WebDriverWait(driver, 5).until(
+        #     EC.presence_of_element_located(
+        #         (By.XPATH, "//div[@data-tid='calling-right-side-panel']//button[@data-tid='more-menu-trigger']"))
+        # ).click()
+        # WebDriverWait(driver, 5).until(
+        #     EC.presence_of_element_located((By.XPATH, "//span[text()='Stop all spotlights']"))
+        # ).click()
+        # WebDriverWait(driver, 5).until(
+        #     EC.presence_of_element_located((By.XPATH, "//button[@data-tid='confirm-spotlight-change-button']"))
+        # ).click()
+
+        participant_video_containers = driver.find_elements(By.XPATH,
+                                                            "//div[contains(@aria-label, 'spotlighted') and @data-cid='calling-participant-stream']")
+        for container in participant_video_containers:
+            ActionChains(driver).move_to_element(container).context_click().perform()
+
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, "//div[@data-track-action-outcome='stopSpotlight']"))
+            ).click()
+
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, "//button[@data-tid='confirm-spotlight-change-button']"))
+            ).click()
+
     except Exception as e:
         print(e)
     finally:
@@ -85,10 +101,9 @@ def unspotall(driver: WebDriver, lg, q: Queue, userid: str, channel_layer, *name
 
 
 def send_to_chat(driver: WebDriver, message: str):
-    switch_to_chat(driver)
     try:
         input_field = WebDriverWait(driver, 5).until(
-            EC.presence_of_element_located((By.XPATH, "//textarea[@data-tid='ckeditor']"))
+            EC.presence_of_element_located((By.XPATH, "//div[@data-tid='ckeditor']"))
         )
         input_field.send_keys(message)
         input_field.send_keys(Keys.RETURN)
