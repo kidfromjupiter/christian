@@ -422,7 +422,7 @@ def mutebuthost(driver: WebDriver, lg, userid: str, channel_layer):
         driver.save_screenshot("mute_but_host_error.png")
 
 
-def send_message(driver: WebDriver, message: str, lg):
+def send_msg_to_chat(driver: WebDriver, message: str, lg):
     try:
         chat_container = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located(

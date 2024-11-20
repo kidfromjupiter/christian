@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from .aux import Message, send_message, send_status
-from .zoombot_aux import mute, muteall, mutebuthost, removespotlights, request_all_to_unmute, request_cameras, spotlight
+from .zoombot_aux import mute, muteall, mutebuthost, removespotlights, request_all_to_unmute, request_cameras, spotlight, send_msg_to_chat
 
 lg.basicConfig(level=lg.DEBUG, filename="py_log.log", filemode="w")
 WAIT_ADMIT_TIME = 120
@@ -177,7 +177,7 @@ def run_zoombot(meeting_link, userid, timeout, q: Queue):
                         spotlight(driver, lg, userid, channel_layer, *args)
                     case "message":
                         msg = " ".join(args)
-                        removespotlights(driver, msg, lg, )
+                        send_msg_to_chat(driver, msg, lg, )
                     case "unspot":
                         removespotlights(driver, lg, userid, channel_layer)
                     case "mutebuthost":
