@@ -18,7 +18,6 @@
     body {
         /*padding-left: 192px;*/
         /*padding-right: 192px;*/
-        padding: 20px;
     }
 
     #output {
@@ -49,11 +48,54 @@
         max-height: 33vh;
         overflow-y: hidden;
     }
+
+    #draw {
+        position: fixed;      
+        top: 0;               
+        left: 0;              
+        width: 100vw;         
+        height: 100vh;        
+        z-index: 9999;        
+        background-color: rgba(0, 0, 0, 0);
+    }
 </style>
 <body>
-<div id="output" class="output"></div>
+<div style="padding:20px;">
+
+    <div id="draw">
+    </div>
+  <div id="output" class="output"></div>
+</div>
 </body>
-<script>
+<script defer>
+    // Draw js
+    
+    function toggleDraw() {
+        const element = document.getElementById("draw")
+        if (element.style.display === "none") {
+           element.style.display = "fixed" 
+        }else {
+            element.style.display = "none"
+        }
+        
+    }
+    const script1 = document.createElement("script");
+    script1.src = "https://cdn.jsdelivr.net/npm/js-draw@1.0.0/dist/bundle.js";
+    script1.onload = () => {
+        const element = document.getElementById("draw")
+        const editor = new jsdraw.Editor(element);
+        window.editor = editor;
+        editor.addToolbar();
+        // editor.getRootElement().style.height = '600px';
+        console.log(jsdraw.BackgroundComponentBackgroundType)
+        editor.dispatch(editor.setBackgroundStyle({
+            color: jsdraw.Color4.orange,
+            type: jsdraw.BackgroundComponentBackgroundType.Grid,
+            autoresize: true,
+        }));
+    };
+    document.body.appendChild(script1)
+
     var roomID = "test";
     var color1 = ""
     var color2 = ""
@@ -250,8 +292,9 @@
             });
         }
     }
+
     let lastTap = 0;
-    document.body.addEventListener('touchend', function(event) {
+    document.body.addEventListener('touchend', function (event) {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTap;
         if (tapLength < 500 && tapLength > 0) {
